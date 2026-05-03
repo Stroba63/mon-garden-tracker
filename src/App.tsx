@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Trophy, RotateCcw, History, X, Server, Search, Cloud, LogOut } from 'lucide-react';
+import { Trophy, RotateCcw, History, X, Server, Search, Cloud, LogOut, Clock } from 'lucide-react';
 import { initializeApp } from 'firebase/app';
 import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
 import { getFirestore, doc, setDoc, onSnapshot } from 'firebase/firestore';
@@ -9,7 +9,7 @@ let firebaseConfig;
 if (typeof __firebase_config !== 'undefined') {
   firebaseConfig = JSON.parse(__firebase_config);
 } else {
-  // 👇👇👇 TES INFORMATIONS FIREBASE 👇👇👇
+  // TES INFORMATIONS FIREBASE
   firebaseConfig = {
     apiKey: "AIzaSyB7PdcsonVW5COmTh2cbfiNaO02s6o0uO8",
     authDomain: "mon-tracker-garden.firebaseapp.com",
@@ -19,7 +19,6 @@ if (typeof __firebase_config !== 'undefined') {
     appId: "1:1004588310849:web:c4eb8f586f47fae92f41c0",
     measurementId: "G-3V98Y16R96"
   };
-  // 👆👆👆 TES INFORMATIONS FIREBASE 👆👆👆
 }
 
 const app = initializeApp(firebaseConfig);
@@ -112,16 +111,23 @@ export default function App() {
   const [totalEggs, setTotalEggs] = useState(0);
   const [currentStreak, setCurrentStreak] = useState(0);
   const [history, setHistory] = useState([]);
+  const [lastActionTime, setLastActionTime] = useState(null); // Nouveau state pour le dernier clic
+  const [currentTime, setCurrentTime] = useState(Date.now()); // Horloge en direct
 
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
   const [isHugeModalOpen, setIsHugeModalOpen] = useState(false);
   const [hugeWeight, setHugeWeight] = useState("");
   const [imageError, setImageError] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-
   const [selectedPet, setSelectedPet] = useState(PETS[0]);
 
-  // 1. Gestion de la connexion (Google & Anonyme)
+  // Horloge qui tourne toutes les secondes pour mettre à jour les compteurs de temps
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // 1. Gestion de la connexion
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
@@ -142,13 +148,13 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
-  // 2. Fonctions de Connexion Google
+  // 2. Fonctions Google
   const handleGoogleLogin = async () => {
     const provider = new GoogleAuthProvider();
     try {
       await signInWithPopup(auth, provider);
     } catch (error) {
-      console.error("Erreur de connexion Google:", error);
+      console.error("Erreur Google:", error);
     }
   };
 
@@ -158,6 +164,7 @@ export default function App() {
       setTotalEggs(0);
       setCurrentStreak(0);
       setHistory([]);
+      setLastActionTime(null);
     } catch (error) {
       console.error("Erreur déconnexion:", error);
     }
@@ -174,10 +181,12 @@ export default function App() {
         setTotalEggs(data.totalEggs || 0);
         setCurrentStreak(data.currentStreak || 0);
         setHistory(data.history ? JSON.parse(data.history) : []);
+        setLastActionTime(data.lastActionTime || null); // Sync du dernier clic
       } else if (user.isAnonymous) {
         setTotalEggs(0);
         setCurrentStreak(0);
         setHistory([]);
+        setLastActionTime(null);
       }
       setIsLoading(false);
     }, (error) => {
@@ -188,7 +197,7 @@ export default function App() {
   }, [user]);
 
   // 4. Sauvegarde
-  const saveData = async (newTotal, newStreak, newHistory) => {
+  const saveData = async (newTotal, newStreak, newHistory, newLastAction) => {
     if (!user) return;
     setIsSaving(true);
     try {
@@ -196,34 +205,44 @@ export default function App() {
       await setDoc(docRef, {
         totalEggs: newTotal,
         currentStreak: newStreak,
-        history: JSON.stringify(newHistory)
+        history: JSON.stringify(newHistory),
+        lastActionTime: newLastAction // Sauvegarde du temps du clic
       }, { merge: true });
     } finally {
       setIsSaving(false);
     }
   };
 
+  // Fonction modifiée pour inclure le temps du clic
   const modifyEggs = (amount) => {
     const newTotal = Math.max(0, totalEggs + amount);
     const newStreak = Math.max(0, currentStreak + amount);
+    const now = Date.now();
+    
     setTotalEggs(newTotal);
     setCurrentStreak(newStreak);
-    saveData(newTotal, newStreak, history);
+    setLastActionTime(now); // On enregistre le moment exact du clic
+    
+    saveData(newTotal, newStreak, history, now);
   };
 
   const handleRegisterHuge = () => {
+    const now = Date.now();
     const newHuge = {
-      id: Date.now(),
+      id: now,
       eggsTaken: currentStreak,
       totalAtTime: totalEggs,
       weight: hugeWeight || "?",
       petId: selectedPet.id,
-      date: new Date().toLocaleDateString('fr-FR') + ' ' + new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+      date: new Date().toLocaleDateString('fr-FR') + ' ' + new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+      timestamp: now // On sauvegarde le temps mondial pour ce Huge
     };
     const newHistory = [newHuge, ...history];
     setHistory(newHistory);
     setCurrentStreak(0);
-    saveData(totalEggs, 0, newHistory);
+    
+    // On sauvegarde avec le dernier temps d'action intact
+    saveData(totalEggs, 0, newHistory, lastActionTime); 
     
     setHugeWeight("");
     setSearchTerm("");
@@ -234,7 +253,8 @@ export default function App() {
     setTotalEggs(0);
     setCurrentStreak(0);
     setHistory([]);
-    saveData(0, 0, []);
+    setLastActionTime(null);
+    saveData(0, 0, [], null);
     setIsResetModalOpen(false);
   };
 
@@ -242,6 +262,23 @@ export default function App() {
     if (!searchTerm) return PETS;
     return PETS.filter(pet => pet.name.toLowerCase().includes(searchTerm.toLowerCase()));
   }, [searchTerm]);
+
+  // Fonction utilitaire pour formater le temps écoulé (ex: "Il y a 14 sec")
+  const formatRelativeTime = (timestamp) => {
+    if (!timestamp) return "Jamais";
+    const diff = Math.max(0, Math.floor((currentTime - timestamp) / 1000));
+    
+    if (diff < 60) return `il y a ${diff} sec`;
+    
+    const mins = Math.floor(diff / 60);
+    if (mins < 60) return `il y a ${mins} min ${diff % 60} s`;
+    
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `il y a ${hours} h ${mins % 60} min`;
+    
+    const days = Math.floor(hours / 24);
+    return `il y a ${days} j ${hours % 24} h`;
+  };
 
   if (isLoading) return (
     <div className="min-h-screen bg-[#060a0e] flex flex-col items-center justify-center text-emerald-500">
@@ -255,7 +292,6 @@ export default function App() {
       
       {/* Barre d'état & Connexion */}
       <div className="w-full max-w-md flex justify-between items-center mb-6 px-4">
-        
         {user && !user.isAnonymous ? (
           <button onClick={handleLogout} className="flex items-center gap-2 bg-emerald-900/40 hover:bg-emerald-800/60 transition-colors px-3 py-1.5 rounded-full border border-emerald-700 shadow-[0_0_10px_rgba(16,185,129,0.2)]">
             <Cloud className="w-3 h-3 text-emerald-400" />
@@ -295,7 +331,6 @@ export default function App() {
             </div>
           )}
         </div>
-
         <h1 className="text-2xl font-black text-white uppercase tracking-wider text-left drop-shadow-lg leading-tight">
           GROW A GARDEN<br/>
           <span className="text-emerald-300 text-base opacity-80">Tracker Personnel</span>
@@ -317,8 +352,10 @@ export default function App() {
       </div>
 
       {/* Panneau de Contrôle */}
-      <div className="w-full max-w-md bg-[#111821] p-8 border-x border-b border-slate-800/50 rounded-b-[3rem] shadow-2xl space-y-10">
-        <div className="space-y-8">
+      <div className="w-full max-w-md bg-[#111821] p-8 border-x border-b border-slate-800/50 rounded-b-[3rem] shadow-2xl space-y-8">
+        
+        {/* --- ZONE CLICS --- */}
+        <div className="space-y-6">
           <div className="space-y-4">
             <div className="flex items-center gap-3 px-2">
               <div className="h-px flex-1 bg-slate-800"></div>
@@ -357,18 +394,38 @@ export default function App() {
               ))}
             </div>
           </div>
+          
+          {/* ⏱️ NOUVEAU : Timer du dernier clic */}
+          <div className="text-center pt-2 flex items-center justify-center gap-2">
+             <Clock className="w-3 h-3 text-slate-500" />
+             <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+               Dernier ajout : <span className="text-emerald-400 font-black">{formatRelativeTime(lastActionTime)}</span>
+             </p>
+          </div>
         </div>
 
-        <button 
-          onClick={() => setIsHugeModalOpen(true)}
-          className="w-full bg-gradient-to-b from-orange-400 to-orange-600 hover:from-orange-300 hover:to-orange-500 text-[#060a0e] py-7 rounded-[2rem] font-black text-2xl shadow-xl transition-all flex flex-col items-center justify-center gap-1 transform active:scale-95 border-b-[6px] border-orange-800 hover:border-b-[4px] hover:translate-y-[2px] active:border-b-0 active:translate-y-[6px]"
-        >
-          <div className="flex items-center gap-3">
-            <Trophy className="w-8 h-8" />
-            HUGE OBTENU !
+        <div className="h-px w-full bg-slate-800/50 my-6"></div>
+
+        {/* --- ZONE HUGE --- */}
+        <div>
+          {/* ⏱️ NOUVEAU : Timer du dernier Huge */}
+          <div className="text-center mb-3">
+             <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+               Dernier Huge obtenu : <span className="text-orange-400 font-black">{history.length > 0 ? formatRelativeTime(history[0].timestamp) : "Aucun"}</span>
+             </p>
           </div>
-          <span className="text-[9px] uppercase tracking-[0.2em] font-black opacity-60">Enregistrer dans le cloud</span>
-        </button>
+
+          <button 
+            onClick={() => setIsHugeModalOpen(true)}
+            className="w-full bg-gradient-to-b from-orange-400 to-orange-600 hover:from-orange-300 hover:to-orange-500 text-[#060a0e] py-7 rounded-[2rem] font-black text-2xl shadow-xl transition-all flex flex-col items-center justify-center gap-1 transform active:scale-95 border-b-[6px] border-orange-800 hover:border-b-[4px] hover:translate-y-[2px] active:border-b-0 active:translate-y-[6px]"
+          >
+            <div className="flex items-center gap-3">
+              <Trophy className="w-8 h-8" />
+              HUGE OBTENU !
+            </div>
+            <span className="text-[9px] uppercase tracking-[0.2em] font-black opacity-60">Enregistrer dans le cloud</span>
+          </button>
+        </div>
       </div>
 
       {/* Historique Cloud */}
@@ -395,7 +452,6 @@ export default function App() {
           ) : (
             history.map((h, i) => {
               const petInfo = PETS.find(p => p.id === h.petId) || { name: 'Huge Inconnu', emoji: '🏆', image: null };
-              
               return (
                 <div key={h.id} className="bg-[#111821] border border-slate-800/40 rounded-3xl p-5 flex items-center gap-4 shadow-lg hover:border-slate-700 transition-colors">
                   <div className="w-20 h-20 shrink-0 bg-gradient-to-br from-slate-800 to-[#0a0f14] rounded-2xl flex items-center justify-center p-2 border border-slate-700/50 shadow-inner">
@@ -515,7 +571,6 @@ export default function App() {
       )}
 
       <style dangerouslySetInnerHTML={{__html: `
-        /* --- ÉCRASE LES MARGES GRISES DE VITE --- */
         :root { background-color: #060a0e !important; }
         body { margin: 0 !important; padding: 0 !important; background-color: #060a0e !important; }
         #root { max-width: none !important; padding: 0 !important; margin: 0 !important; width: 100%; text-align: left !important; }
