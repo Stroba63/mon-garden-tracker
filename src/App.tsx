@@ -158,7 +158,6 @@ const playHugeSound = () => {
   } catch(e) { console.warn("Audio bloqué", e); }
 };
 
-
 export default function App() {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -381,10 +380,10 @@ export default function App() {
     return `il y a ${days} j ${hours % 24} h`;
   };
 
-  // Calculs statistiques
+  // --- NOUVEAUX CALCULS STATISTIQUES (Ignore les jours à 0) ---
   const todayEggs = dailyStats[getTodayString()] || 0;
   
-  // On ne prend en compte que les jours où on a vraiment joué (> 0)
+  // On ne prend en compte QUE les jours où on a joué (> 0 œufs)
   const activeDailyStats = Object.entries(dailyStats).filter(([_, count]) => count > 0);
   const totalTrackedDays = activeDailyStats.length;
   const totalEggsInStats = activeDailyStats.reduce((acc, [_, count]) => acc + count, 0);
@@ -392,7 +391,7 @@ export default function App() {
   
   const sortedDailyStats = useMemo(() => {
     return activeDailyStats.sort((a, b) => b[0].localeCompare(a[0]));
-  }, [dailyStats]);
+  }, [dailyStats, activeDailyStats]);
 
   const formatDateString = (dateStr) => {
     const parts = dateStr.split('-');
@@ -455,27 +454,31 @@ export default function App() {
       </div>
 
       {/* --- WRAPPER PRINCIPAL DES 3 COLONNES --- */}
+      {/* Retrait de lg:sticky et lg:top pour un alignement parfait */}
       <div className="flex-1 w-full max-w-[1600px] mx-auto flex flex-col lg:flex-row items-center lg:items-stretch justify-center gap-6 xl:gap-10 px-4 lg:px-10 pb-4 lg:pb-8 min-h-0">
         
         {/* === COLONNE 1 : STATISTIQUES === */}
-        <div className="hidden lg:flex flex-col w-[320px] bg-[#111821] rounded-[3rem] p-8 border border-slate-800/50 shadow-2xl overflow-hidden shrink-0">
-          <div className="flex-none flex justify-between items-start mb-8">
-            <div className="flex items-center gap-2 text-emerald-500">
-              <BarChart2 className="w-5 h-5" />
-              <h2 className="text-sm font-black uppercase tracking-[0.2em] text-white">Statistiques</h2>
+        <div className="hidden lg:flex flex-col w-[320px] bg-[#111821] rounded-[3rem] border border-slate-800/50 shadow-2xl overflow-hidden shrink-0">
+          <div className="flex-none p-8 pb-4">
+            <div className="flex justify-between items-start mb-6">
+              <div className="flex items-center gap-2 text-emerald-500">
+                <BarChart2 className="w-5 h-5" />
+                <h2 className="text-sm font-black uppercase tracking-[0.2em] text-white">Statistiques</h2>
+              </div>
             </div>
-          </div>
-          
-          <div className="flex-none bg-emerald-900/20 border border-emerald-500/30 rounded-[2rem] p-6 text-center shadow-inner mb-8">
-            <p className="text-[10px] font-black text-emerald-500/80 uppercase tracking-widest mb-1">Moyenne quotidienne</p>
-            <div className="flex items-end justify-center gap-1.5 mt-2">
-              <span className="text-5xl font-black text-emerald-400 tabular-nums tracking-tighter leading-none">{averagePerDay}</span>
-              <span className="text-xs font-bold text-emerald-600 mb-1">œufs/j</span>
+            
+            <div className="bg-emerald-900/20 border border-emerald-500/30 rounded-[2rem] p-6 text-center shadow-inner">
+              <p className="text-[10px] font-black text-emerald-500/80 uppercase tracking-widest mb-1">Moyenne quotidienne</p>
+              <div className="flex items-end justify-center gap-1.5 mt-2">
+                <span className="text-5xl font-black text-emerald-400 tabular-nums tracking-tighter leading-none">{averagePerDay}</span>
+                <span className="text-xs font-bold text-emerald-600 mb-1">œufs/j</span>
+              </div>
+              <p className="text-[9px] text-slate-500 font-bold uppercase mt-3">Sur {totalTrackedDays} jour(s) actif(s)</p>
             </div>
-            <p className="text-[9px] text-slate-500 font-bold uppercase mt-3">Sur {totalTrackedDays} jour(s)</p>
           </div>
 
-          <div className="flex-1 overflow-y-auto custom-scrollbar pr-3">
+          {/* Déplacement du padding à l'intérieur de la zone de scroll pour que la barre de défilement colle au bord */}
+          <div className="flex-1 overflow-y-auto custom-scrollbar px-8 pb-8">
             <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest border-b border-slate-800 pb-3 mb-4">Historique par jour</h4>
             
             <div className="bg-emerald-500/10 border border-emerald-500/30 px-4 py-3 rounded-2xl flex items-center gap-2.5 shadow-sm mb-4">
@@ -489,7 +492,7 @@ export default function App() {
               <div className="space-y-2.5">
                 {sortedDailyStats.map(([date, count]) => {
                   const isToday = date === getTodayString();
-                  if (isToday) return null;
+                  if (isToday) return null; // Ne pas afficher 2 fois aujourd'hui
                   return (
                     <div key={date} className="flex justify-between items-center p-4 rounded-2xl border bg-[#0a0f14] border-slate-800">
                       <div className="flex items-center gap-2.5 text-slate-400">
@@ -505,7 +508,7 @@ export default function App() {
           </div>
         </div>
 
-        {/* === COLONNE 2 : L'APPLICATION === */}
+        {/* === COLONNE 2 : L'APPLICATION (Le coeur du tracker) === */}
         <div className="flex-1 w-full max-w-md lg:max-w-[500px] flex flex-col bg-[#111821] rounded-[3rem] border border-slate-800/50 shadow-2xl overflow-hidden relative">
           
           <div className="flex-none w-full bg-gradient-to-b from-[#107c64] to-[#0a4d3e] p-8 flex flex-row items-center justify-center gap-6 relative border-b border-white/5 overflow-hidden">
@@ -541,8 +544,6 @@ export default function App() {
             <div className="p-6 lg:p-8 text-center flex flex-col justify-center min-w-0">
               <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 lg:mb-2">Œufs Ouverts</p>
               <p className="text-4xl lg:text-5xl font-black text-white tabular-nums tracking-tighter leading-none truncate px-2">{totalEggs}</p>
-              {/* Info Bonus stat vide pour aligner visuellement avec l'autre colonne */}
-              <p className="text-[9px] text-slate-800 font-bold uppercase mt-2 select-none opacity-0">Alignement</p>
             </div>
             <div className="p-6 lg:p-8 text-center flex flex-col justify-center bg-orange-500/[0.03] min-w-0">
               <p className="text-[10px] font-black text-orange-500/80 uppercase tracking-widest mb-1 lg:mb-2 italic">Pity Actuelle</p>
@@ -551,6 +552,7 @@ export default function App() {
           </div>
 
           <div className="flex-1 overflow-y-auto custom-scrollbar p-6 lg:p-8 flex flex-col justify-between space-y-8 relative">
+            
             <div className="space-y-6 lg:space-y-8">
               <div className="space-y-4">
                 <div className="flex items-center gap-3 px-2">
@@ -558,7 +560,7 @@ export default function App() {
                   <span className="text-[9px] lg:text-[10px] font-black text-emerald-500 uppercase tracking-[0.3em]">Ouvrir des œufs</span>
                   <div className="h-px flex-1 bg-slate-800"></div>
                 </div>
-                <div className="grid grid-cols-3 gap-4 relative">
+                <div className="grid grid-cols-3 gap-4">
                   {[1, 5, 13].map(val => (
                     <button 
                       key={`+${val}`}
@@ -616,13 +618,14 @@ export default function App() {
                 </div>
               </button>
             </div>
+
           </div>
         </div>
 
         {/* === COLONNE 3 : HISTORIQUE === */}
-        <div className="w-full max-w-md mx-auto lg:max-w-none lg:w-[380px] flex flex-col bg-[#111821] rounded-[3rem] p-8 border border-slate-800/50 shadow-2xl overflow-hidden shrink-0 mt-6 lg:mt-0">
+        <div className="hidden lg:flex flex-col w-[380px] bg-[#111821] rounded-[3rem] border border-slate-800/50 shadow-2xl overflow-hidden shrink-0 mt-6 lg:mt-0">
           
-          <div className="flex-none flex justify-between items-center mb-6">
+          <div className="flex-none flex justify-between items-center p-8 pb-4">
             <h2 className="text-sm font-black text-slate-500 uppercase tracking-[0.2em] flex items-center gap-3">
               <History className="w-5 h-5" /> Journal
             </h2>
@@ -633,7 +636,7 @@ export default function App() {
             )}
           </div>
 
-          <div className="flex-1 overflow-y-auto custom-scrollbar pr-3 space-y-4">
+          <div className="flex-1 overflow-y-auto custom-scrollbar px-8 pb-8 space-y-4">
             {history.length === 0 ? (
               <div className="text-center py-20 bg-[#0a0f14] rounded-3xl border border-dashed border-slate-800/50 text-slate-600 text-[10px] font-black uppercase tracking-widest flex flex-col items-center gap-5">
                 <div className="w-14 h-14 rounded-full border-2 border-slate-800 flex items-center justify-center">
@@ -656,7 +659,8 @@ export default function App() {
                     </div>
                     <div className="flex-1 min-w-0 flex flex-col justify-center gap-2">
                       <div className="flex justify-between items-start">
-                        <span className="text-orange-500 font-black uppercase tracking-wider text-xs leading-tight pt-1 pr-2 break-words">{petInfo.name}</span>
+                        {/* Correction appliquée: break-words et espace pour ne pas couper le texte */}
+                        <span className="text-orange-500 font-black uppercase tracking-wider text-xs leading-tight pt-1 pr-2 break-words whitespace-normal">{petInfo.name}</span>
                         <span className="text-[9px] text-slate-500 font-bold tabular-nums text-right shrink-0">{h.date}</span>
                       </div>
                       <div className="flex justify-between items-end mt-1">
@@ -670,7 +674,7 @@ export default function App() {
                         </div>
                       </div>
                     </div>
-                    {/* Bouton Partager (Apparait au survol de la case) */}
+                    {/* Bouton Partager */}
                     <button 
                       onClick={() => handleShare(h, petInfo)}
                       className="absolute top-2 right-2 p-1.5 bg-slate-800/80 hover:bg-slate-700 rounded-lg text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm"
