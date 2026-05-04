@@ -319,8 +319,6 @@ export default function App() {
   );
 
   return (
-    // Structure Dashboard PC : h-screen (prend toute la hauteur), overflow-hidden (pas de scroll sur la page globale)
-    // Structure Mobile : min-h-screen, scroll naturel
     <div className="min-h-screen lg:h-screen bg-[#030608] text-white font-sans flex flex-col lg:overflow-hidden selection:bg-emerald-500/30">
       
       {/* --- TOP BAR GLOBALE --- */}
@@ -347,12 +345,11 @@ export default function App() {
         </div>
       </div>
 
-      {/* --- WRAPPER PRINCIPAL (PLEIN ÉCRAN FLUIDE) --- */}
-      {/* Sur PC, min-h-0 empêche le débordement, permettant aux colonnes internes de scroller */}
+      {/* --- WRAPPER PRINCIPAL --- */}
       <div className="flex-1 w-full flex flex-col lg:flex-row gap-4 lg:gap-6 px-4 pb-4 lg:px-8 lg:pb-8 min-h-0">
         
-        {/* === COLONNE GAUCHE : STATISTIQUES === */}
-        <div className="hidden lg:flex flex-col w-[300px] xl:w-[350px] bg-[#0A1014] rounded-[2rem] border border-emerald-900/20 shadow-2xl flex-none overflow-hidden relative">
+        {/* === COLONNE GAUCHE (MODIFIÉE) === */}
+        <div className="hidden lg:flex flex-col w-[260px] xl:w-[300px] bg-[#0A1014] rounded-[2rem] border border-emerald-900/20 shadow-2xl flex-none overflow-hidden relative">
           <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-emerald-900/10 to-transparent pointer-events-none"></div>
           
           <div className="flex-none p-6 pb-2 relative z-10">
@@ -361,10 +358,10 @@ export default function App() {
               <h2 className="text-sm font-black uppercase tracking-[0.2em] text-white">Statistiques</h2>
             </div>
             
-            <div className="bg-[#05080A] border border-white/5 rounded-2xl p-6 text-center shadow-inner">
+            <div className="bg-[#05080A] border border-white/5 rounded-2xl p-5 text-center shadow-inner">
               <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Moyenne quotidienne</p>
               <div className="flex items-end justify-center gap-1.5 mt-2">
-                <span className="text-5xl font-black text-emerald-400 tabular-nums tracking-tighter leading-none">{averagePerDay}</span>
+                <span className="text-4xl xl:text-5xl font-black text-emerald-400 tabular-nums tracking-tighter leading-none truncate">{averagePerDay}</span>
                 <span className="text-xs font-bold text-slate-600 mb-1">œufs/j</span>
               </div>
               <p className="text-[9px] text-slate-600 font-bold uppercase mt-3">Sur {totalTrackedDays} jour(s) actif(s)</p>
@@ -380,12 +377,12 @@ export default function App() {
                 {sortedDailyStats.map(([date, count]) => {
                   const isToday = date === getTodayString();
                   return (
-                    <div key={date} className={`flex justify-between items-center p-4 rounded-xl border transition-colors ${isToday ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-[#05080A] border-white/5 hover:border-white/10'}`}>
-                      <div className="flex items-center gap-3 text-slate-400">
-                        <Calendar className={`w-4 h-4 ${isToday ? 'text-emerald-500' : 'text-slate-600'}`} />
-                        <span className="text-xs font-bold">{isToday ? "Aujourd'hui" : formatDateString(date)}</span>
+                    <div key={date} className={`flex justify-between items-center p-3 rounded-xl border transition-colors ${isToday ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-[#05080A] border-white/5 hover:border-white/10'}`}>
+                      <div className="flex items-center gap-2 text-slate-400">
+                        <Calendar className={`w-3.5 h-3.5 ${isToday ? 'text-emerald-500' : 'text-slate-600'}`} />
+                        <span className="text-[11px] font-bold truncate">{isToday ? "Aujourd'hui" : formatDateString(date)}</span>
                       </div>
-                      <span className={`text-base font-black tabular-nums ${isToday ? 'text-emerald-400' : 'text-slate-300'}`}>+{count}</span>
+                      <span className={`text-sm font-black tabular-nums ${isToday ? 'text-emerald-400' : 'text-slate-300'}`}>+{count}</span>
                     </div>
                   )
                 })}
@@ -394,14 +391,13 @@ export default function App() {
           </div>
         </div>
 
-        {/* === COLONNE CENTRALE : L'APPLICATION (S'ÉTEND AU MILIEU) === */}
-        <div className="flex-1 min-w-0 bg-[#0A1014] rounded-[2.5rem] border border-emerald-900/20 shadow-2xl flex flex-col overflow-hidden relative">
+        {/* === COLONNE CENTRALE (MODIFIÉE) === */}
+        <div className="flex-1 min-w-[320px] bg-[#0A1014] rounded-[2.5rem] border border-emerald-900/20 shadow-2xl flex flex-col overflow-hidden relative">
           
-          {/* Header de la carte centrale */}
-          <div className="flex-none w-full bg-gradient-to-br from-[#063324] via-[#091a15] to-[#0A1014] p-8 lg:p-10 flex flex-col sm:flex-row items-center sm:justify-start gap-6 border-b border-white/5 relative">
+          <div className="flex-none w-full bg-gradient-to-br from-[#063324] via-[#091a15] to-[#0A1014] p-6 lg:p-8 flex flex-col sm:flex-row items-center sm:justify-start gap-4 border-b border-white/5 relative">
             <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/10 blur-[100px] rounded-full -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
             
-            <div className="relative flex-shrink-0 flex justify-center items-center w-24 h-24 lg:w-28 lg:h-28">
+            <div className="relative flex-shrink-0 flex justify-center items-center w-20 h-20 lg:w-24 lg:h-24">
               {!imageError ? (
                 <img 
                   src="https://github.com/Stroba63/garden-tracker-assets/blob/main/CommonEgg.webp?raw=true" 
@@ -410,17 +406,17 @@ export default function App() {
                   onError={() => setImageError(true)}
                 />
               ) : (
-                <div className="w-20 h-20 bg-emerald-800/80 rounded-[40%_60%_60%_40%/50%_50%_60%_50%] border-4 border-emerald-400/50 shadow-[0_0_30px_rgba(16,124,100,0.8)] animate-bounce-slow flex items-center justify-center relative z-10">
-                   <span className="text-white/50 font-bold text-xs uppercase tracking-widest">Œuf</span>
+                <div className="w-16 h-16 bg-emerald-800/80 rounded-[40%_60%_60%_40%/50%_50%_60%_50%] border-4 border-emerald-400/50 shadow-[0_0_30px_rgba(16,124,100,0.8)] animate-bounce-slow flex items-center justify-center relative z-10">
+                   <span className="text-white/50 font-bold text-[10px] uppercase tracking-widest">Œuf</span>
                 </div>
               )}
             </div>
-            <div className="z-10 text-center sm:text-left min-w-0">
-              <h1 className="text-3xl lg:text-5xl font-black text-white uppercase tracking-wide truncate">Grow a Garden</h1>
-              <p className="text-emerald-400 font-bold text-xs lg:text-sm uppercase tracking-widest mt-2">Tracker Personnel</p>
+            
+            <div className="z-10 flex-1 text-center sm:text-left min-w-0">
+              <h1 className="text-2xl lg:text-3xl xl:text-4xl font-black text-white uppercase tracking-wide truncate">Grow a Garden</h1>
+              <p className="text-emerald-400 font-bold text-[10px] lg:text-xs uppercase tracking-widest mt-1">Tracker Personnel</p>
             </div>
 
-            {/* Bouton mobile uniquement (pour ouvrir les stats) */}
             <button 
               onClick={() => setIsStatsModalOpen(true)}
               className="lg:hidden absolute top-4 right-4 bg-white/5 hover:bg-white/10 p-2.5 rounded-xl text-slate-400 transition-colors border border-white/5 backdrop-blur-sm"
@@ -429,35 +425,34 @@ export default function App() {
             </button>
           </div>
 
-          {/* Zone Statistiques (Milieu) */}
+          {/* Zone Statistiques - Retrait du break-all et tailles ajustées */}
           <div className="flex-none grid grid-cols-2 divide-x divide-white/5 border-b border-white/5 bg-[#05080A]/50">
-            <div className="p-8 text-center flex flex-col justify-center min-w-0">
-              <p className="text-xs font-black text-slate-500 uppercase tracking-widest mb-2">Œufs Ouverts</p>
-              <p className="text-5xl lg:text-7xl font-black text-white tabular-nums tracking-tighter leading-none break-all">{totalEggs}</p>
+            <div className="p-6 lg:p-8 text-center flex flex-col justify-center min-w-0">
+              <p className="text-[10px] xl:text-xs font-black text-slate-500 uppercase tracking-widest mb-2">Œufs Ouverts</p>
+              <p className="text-5xl lg:text-6xl font-black text-white tabular-nums tracking-tighter leading-none truncate">{totalEggs}</p>
             </div>
-            <div className="p-8 text-center flex flex-col justify-center bg-orange-500/[0.02] min-w-0">
-              <p className="text-xs font-black text-orange-500/80 uppercase tracking-widest mb-2 italic">Pity Actuelle</p>
-              <p className="text-5xl lg:text-7xl font-black text-orange-400 tabular-nums tracking-tighter leading-none break-all">{currentStreak}</p>
+            <div className="p-6 lg:p-8 text-center flex flex-col justify-center bg-orange-500/[0.02] min-w-0">
+              <p className="text-[10px] xl:text-xs font-black text-orange-500/80 uppercase tracking-widest mb-2 italic">Pity Actuelle</p>
+              <p className="text-5xl lg:text-6xl font-black text-orange-400 tabular-nums tracking-tighter leading-none truncate">{currentStreak}</p>
             </div>
           </div>
 
-          {/* Panneau de Contrôle (Utilise tout l'espace central) */}
-          <div className="flex-1 overflow-y-auto flex flex-col justify-center p-6 lg:p-10 relative">
-            {/* Conteneur pour limiter la largeur des boutons sur les écrans ultra larges */}
-            <div className="max-w-2xl mx-auto w-full space-y-10 lg:space-y-12">
+          {/* Panneau de Contrôle */}
+          <div className="flex-1 overflow-y-auto flex flex-col justify-center p-6 lg:p-8 relative">
+            <div className="max-w-xl mx-auto w-full space-y-8 lg:space-y-10">
               
-              <div className="space-y-6">
+              <div className="space-y-4 lg:space-y-5">
                 <div className="flex items-center gap-4 px-2">
                   <div className="h-px flex-1 bg-white/5"></div>
-                  <span className="text-[10px] lg:text-xs font-black text-emerald-500 uppercase tracking-[0.3em]">Ajouter des œufs</span>
+                  <span className="text-[10px] lg:text-xs font-black text-emerald-500 uppercase tracking-[0.3em] whitespace-nowrap">Ajouter</span>
                   <div className="h-px flex-1 bg-white/5"></div>
                 </div>
-                <div className="grid grid-cols-3 gap-5 lg:gap-8">
+                <div className="grid grid-cols-3 gap-3 lg:gap-5">
                   {[1, 5, 13].map(val => (
                     <button 
                       key={`+${val}`}
                       onClick={() => modifyEggs(val)}
-                      className="bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white py-6 lg:py-8 rounded-[1.5rem] font-black text-3xl lg:text-4xl transition-all shadow-[0_8px_0_rgb(4,120,87)] hover:shadow-[0_4px_0_rgb(4,120,87)] hover:translate-y-[4px] active:translate-y-[8px] active:shadow-none"
+                      className="bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white py-5 lg:py-6 rounded-2xl font-black text-2xl lg:text-3xl transition-all shadow-[0_6px_0_rgb(4,120,87)] hover:shadow-[0_3px_0_rgb(4,120,87)] hover:translate-y-[3px] active:translate-y-[6px] active:shadow-none"
                     >
                       +{val}
                     </button>
@@ -465,19 +460,19 @@ export default function App() {
                 </div>
               </div>
 
-              <div className="space-y-5">
+              <div className="space-y-4">
                 <div className="flex items-center gap-4 px-2">
                   <div className="h-px flex-1 bg-white/5"></div>
-                  <span className="text-[10px] lg:text-xs font-black text-slate-600 uppercase tracking-[0.3em]">Correction rapide</span>
+                  <span className="text-[10px] lg:text-xs font-black text-slate-600 uppercase tracking-[0.3em] whitespace-nowrap">Correction</span>
                   <div className="h-px flex-1 bg-white/5"></div>
                 </div>
-                <div className="grid grid-cols-3 gap-5 lg:gap-8">
+                <div className="grid grid-cols-3 gap-3 lg:gap-5">
                   {[1, 5, 13].map(val => (
                     <button 
                       key={`-${val}`}
                       onClick={() => modifyEggs(-val)}
                       disabled={totalEggs === 0}
-                      className="bg-[#05080A] hover:bg-white/5 active:scale-95 text-slate-500 py-4 lg:py-5 rounded-xl font-bold text-xl transition-all border border-white/5 disabled:opacity-20 disabled:pointer-events-none"
+                      className="bg-[#05080A] hover:bg-white/5 active:scale-95 text-slate-500 py-3 lg:py-4 rounded-xl font-bold text-lg lg:text-xl transition-all border border-white/5 disabled:opacity-20 disabled:pointer-events-none"
                     >
                       -{val}
                     </button>
@@ -492,8 +487,8 @@ export default function App() {
                  </p>
               </div>
 
-              <div className="pt-8 border-t border-white/5">
-                <div className="text-center mb-5">
+              <div className="pt-6 lg:pt-8 border-t border-white/5">
+                <div className="text-center mb-4">
                    <p className="text-[10px] lg:text-xs font-bold text-slate-500 uppercase tracking-widest">
                      Dernier Huge : <span className="text-orange-400 font-black">{history.length > 0 ? formatRelativeTime(history[0].timestamp) : "Aucun"}</span>
                    </p>
@@ -501,10 +496,10 @@ export default function App() {
 
                 <button 
                   onClick={() => setIsHugeModalOpen(true)}
-                  className="w-full bg-gradient-to-b from-orange-400 to-orange-600 hover:from-orange-300 hover:to-orange-500 text-[#030608] py-8 rounded-[2rem] font-black text-3xl shadow-xl transition-all flex flex-col items-center justify-center gap-2 transform active:scale-95 border-b-[8px] border-orange-800 hover:border-b-[4px] hover:translate-y-[4px] active:border-b-0 active:translate-y-[8px]"
+                  className="w-full bg-gradient-to-b from-orange-400 to-orange-600 hover:from-orange-300 hover:to-orange-500 text-[#030608] py-6 lg:py-8 rounded-[2rem] font-black text-2xl lg:text-3xl shadow-xl transition-all flex flex-col items-center justify-center gap-2 transform active:scale-95 border-b-[6px] border-orange-800 hover:border-b-[3px] hover:translate-y-[3px] active:border-b-0 active:translate-y-[6px]"
                 >
-                  <div className="flex items-center gap-4">
-                    <Trophy className="w-10 h-10" />
+                  <div className="flex items-center gap-3">
+                    <Trophy className="w-8 h-8 lg:w-10 lg:h-10" />
                     HUGE OBTENU !
                   </div>
                 </button>
@@ -514,8 +509,8 @@ export default function App() {
           </div>
         </div>
 
-        {/* === COLONNE DROITE : HISTORIQUE === */}
-        <div className="w-full lg:w-[340px] xl:w-[400px] flex-none flex flex-col bg-[#0A1014] rounded-[2rem] border border-emerald-900/20 shadow-2xl relative overflow-hidden">
+        {/* === COLONNE DROITE (MODIFIÉE) === */}
+        <div className="w-full lg:w-[280px] xl:w-[320px] flex-none flex flex-col bg-[#0A1014] rounded-[2rem] border border-emerald-900/20 shadow-2xl relative overflow-hidden">
           <div className="absolute top-0 right-0 w-full h-32 bg-gradient-to-b from-orange-900/5 to-transparent pointer-events-none"></div>
           
           <div className="flex-none flex justify-between items-center p-6 pb-2 relative z-10">
@@ -544,26 +539,25 @@ export default function App() {
                   const petInfo = PETS.find(p => p.id === h.petId) || { name: 'Huge Inconnu', emoji: '🏆', image: null };
                   
                   return (
-                    <div key={h.id} className="bg-[#05080A] border border-white/5 rounded-2xl p-4 flex items-center gap-4 shadow-lg hover:border-white/10 transition-colors">
-                      <div className="w-16 h-16 shrink-0 bg-[#030608] rounded-xl flex items-center justify-center p-2 border border-white/5 shadow-inner">
+                    <div key={h.id} className="bg-[#05080A] border border-white/5 rounded-2xl p-4 flex items-center gap-3 shadow-lg hover:border-white/10 transition-colors">
+                      <div className="w-14 h-14 shrink-0 bg-[#030608] rounded-xl flex items-center justify-center p-2 border border-white/5 shadow-inner">
                         {petInfo.image ? (
                           <img src={petInfo.image} alt={petInfo.name} className="max-w-full max-h-full object-contain drop-shadow-md" onError={(e) => { e.target.style.display='none'; e.target.nextSibling.style.display='block'; }} />
                         ) : null}
-                        <span className="text-3xl drop-shadow-md" style={{ display: petInfo.image ? 'none' : 'block' }}>{petInfo.emoji}</span>
+                        <span className="text-2xl drop-shadow-md" style={{ display: petInfo.image ? 'none' : 'block' }}>{petInfo.emoji}</span>
                       </div>
-                      <div className="flex-1 min-w-0 flex flex-col justify-center gap-1.5">
+                      <div className="flex-1 min-w-0 flex flex-col justify-center gap-1">
                         <div className="flex justify-between items-start">
-                          <span className="text-orange-500 font-black uppercase tracking-wider text-xs leading-none pt-1 truncate pr-2">{petInfo.name}</span>
-                          <span className="text-[9px] text-slate-500 font-bold tabular-nums text-right shrink-0">{h.date}</span>
+                          <span className="text-orange-500 font-black uppercase tracking-wider text-[10px] leading-none pt-1 truncate pr-2">{petInfo.name}</span>
                         </div>
                         <div className="flex justify-between items-end mt-1">
-                          <div className="bg-emerald-500/10 text-emerald-400 px-2.5 py-1.5 rounded-lg border border-emerald-500/20 font-black flex flex-col justify-center shrink-0">
-                            <span className="text-[8px] opacity-70 uppercase tracking-widest mb-px">Poids</span>
-                            <span className="text-sm leading-none">{h.weight} <span className="text-[8px] opacity-80">KG</span></span>
+                          <div className="bg-emerald-500/10 text-emerald-400 px-2 py-1.5 rounded-lg border border-emerald-500/20 font-black flex flex-col justify-center shrink-0">
+                            <span className="text-[7px] opacity-70 uppercase tracking-widest mb-px">Poids</span>
+                            <span className="text-xs leading-none">{h.weight} <span className="text-[7px] opacity-80">KG</span></span>
                           </div>
-                          <div className="text-right min-w-0">
-                            <p className="text-[8px] text-slate-500 uppercase font-black tracking-widest leading-none mb-1.5">Chance</p>
-                            <p className="text-2xl font-black text-white tabular-nums leading-none tracking-tighter truncate">{h.eggsTaken}</p>
+                          <div className="text-right min-w-0 pl-2">
+                            <p className="text-[7px] text-slate-500 uppercase font-black tracking-widest leading-none mb-1">Chance</p>
+                            <p className="text-lg font-black text-white tabular-nums leading-none tracking-tighter truncate">{h.eggsTaken}</p>
                           </div>
                         </div>
                       </div>
@@ -637,7 +631,7 @@ export default function App() {
             <div className="p-6 space-y-6 text-center overflow-y-auto custom-scrollbar flex-1">
               <div className="bg-[#05080A] rounded-2xl p-5 border border-white/5 shadow-inner">
                 <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Obtenu après</p>
-                <p className="text-5xl font-black text-white tracking-tighter tabular-nums">{currentStreak} <span className="text-orange-500 text-lg">œufs</span></p>
+                <p className="text-5xl font-black text-white tracking-tighter tabular-nums truncate">{currentStreak} <span className="text-orange-500 text-lg">œufs</span></p>
               </div>
 
               <div className="text-left space-y-3">
