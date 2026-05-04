@@ -383,22 +383,21 @@ export default function App() {
 
   // Calculs statistiques
   const todayEggs = dailyStats[getTodayString()] || 0;
-  const statsKeys = Object.keys(dailyStats);
-  const totalTrackedDays = statsKeys.length;
-  const totalEggsInStats = Object.values(dailyStats).reduce((a, b) => a + b, 0);
+  
+  // On ne prend en compte que les jours où on a vraiment joué (> 0)
+  const activeDailyStats = Object.entries(dailyStats).filter(([_, count]) => count > 0);
+  const totalTrackedDays = activeDailyStats.length;
+  const totalEggsInStats = activeDailyStats.reduce((acc, [_, count]) => acc + count, 0);
   const averagePerDay = totalTrackedDays > 0 ? Math.round(totalEggsInStats / totalTrackedDays) : 0;
   
   const sortedDailyStats = useMemo(() => {
-    return Object.entries(dailyStats).sort((a, b) => b[0].localeCompare(a[0]));
+    return activeDailyStats.sort((a, b) => b[0].localeCompare(a[0]));
   }, [dailyStats]);
 
   const formatDateString = (dateStr) => {
     const parts = dateStr.split('-');
     return `${parts[2]}/${parts[1]}/${parts[0]}`;
   };
-
-  // Calcul de la "Chance" estimée (plus la pity monte, plus le ratio baisse)
-  const currentOdds = Math.max(1, 20000 - (currentStreak * 2));
 
   if (isLoading) return (
     <div className="min-h-screen bg-[#060a0e] flex flex-col items-center justify-center text-emerald-500">
@@ -548,8 +547,6 @@ export default function App() {
             <div className="p-6 lg:p-8 text-center flex flex-col justify-center bg-orange-500/[0.03] min-w-0">
               <p className="text-[10px] font-black text-orange-500/80 uppercase tracking-widest mb-1 lg:mb-2 italic">Pity Actuelle</p>
               <p className="text-4xl lg:text-5xl font-black text-orange-400 tabular-nums tracking-tighter leading-none truncate px-2">{currentStreak}</p>
-              {/* Le calcul de chance de drop direct ! */}
-              <p className="text-[9px] text-orange-500/50 font-bold uppercase mt-2">Chance : 1 sur ~{currentOdds.toLocaleString('fr-FR')}</p>
             </div>
           </div>
 
@@ -623,7 +620,7 @@ export default function App() {
         </div>
 
         {/* === COLONNE 3 : HISTORIQUE === */}
-        <div className="hidden lg:flex flex-col w-[380px] bg-[#111821] rounded-[3rem] p-8 border border-slate-800/50 shadow-2xl overflow-hidden shrink-0">
+        <div className="w-full max-w-md mx-auto lg:max-w-none lg:w-[380px] flex flex-col bg-[#111821] rounded-[3rem] p-8 border border-slate-800/50 shadow-2xl overflow-hidden shrink-0 mt-6 lg:mt-0">
           
           <div className="flex-none flex justify-between items-center mb-6">
             <h2 className="text-sm font-black text-slate-500 uppercase tracking-[0.2em] flex items-center gap-3">
@@ -659,7 +656,7 @@ export default function App() {
                     </div>
                     <div className="flex-1 min-w-0 flex flex-col justify-center gap-2">
                       <div className="flex justify-between items-start">
-                        <span className="text-orange-500 font-black uppercase tracking-wider text-xs leading-none pt-1 truncate pr-2">{petInfo.name}</span>
+                        <span className="text-orange-500 font-black uppercase tracking-wider text-xs leading-tight pt-1 pr-2 break-words">{petInfo.name}</span>
                         <span className="text-[9px] text-slate-500 font-bold tabular-nums text-right shrink-0">{h.date}</span>
                       </div>
                       <div className="flex justify-between items-end mt-1">
