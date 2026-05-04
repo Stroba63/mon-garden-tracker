@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Trophy, RotateCcw, History, X, Server, Search, Cloud, LogOut, Clock, BarChart2, Calendar } from 'lucide-react';
+import { Trophy, RotateCcw, History, X, Server, Search, Cloud, LogOut, Clock, BarChart2, Calendar, Copy, Volume2, VolumeX, Check } from 'lucide-react';
 import { initializeApp } from 'firebase/app';
 import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
 import { getFirestore, doc, setDoc, onSnapshot } from 'firebase/firestore';
@@ -112,6 +112,53 @@ const getTodayString = () => {
   return `${year}-${month}-${day}`;
 };
 
+// --- MOTEUR AUDIO (Sons de l'UI) ---
+let audioCtx = null;
+const initAudio = () => {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+};
+
+const playPopSound = () => {
+  try {
+    initAudio();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + 0.1);
+    gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.1);
+  } catch (e) { console.warn("Audio bloqué par le navigateur", e); }
+};
+
+const playHugeSound = () => {
+  try {
+    initAudio();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.type = 'square';
+    const t = audioCtx.currentTime;
+    osc.frequency.setValueAtTime(392.00, t); // Sol
+    osc.frequency.setValueAtTime(523.25, t + 0.15); // Do
+    osc.frequency.setValueAtTime(659.25, t + 0.3); // Mi
+    osc.frequency.setValueAtTime(783.99, t + 0.45); // Sol aigu
+    gain.gain.setValueAtTime(0.05, t);
+    gain.gain.setValueAtTime(0.05, t + 0.5);
+    gain.gain.linearRampToValueAtTime(0, t + 1);
+    osc.start();
+    osc.stop(t + 1);
+  } catch(e) { console.warn("Audio bloqué", e); }
+};
+
+
 export default function App() {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -132,8 +179,12 @@ export default function App() {
   const [hugeWeight, setHugeWeight] = useState("");
   const [imageError, setImageError] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-
   const [selectedPet, setSelectedPet] = useState(PETS[0]);
+
+  // Nouveaux états pour les fonctionnalités bonus
+  const [isMuted, setIsMuted] = useState(false);
+  const [floatingTexts, setFloatingTexts] = useState([]);
+  const [copiedId, setCopiedId] = useState(null);
 
   // Horloge en temps réel
   useEffect(() => {
@@ -231,6 +282,25 @@ export default function App() {
     }
   };
 
+  // Ajout avec animation et son
+  const handleAddEggs = (amount, e) => {
+    if (!isMuted) playPopSound();
+
+    // Spawn du texte flottant à la position de la souris
+    const newFloat = {
+      id: Date.now() + Math.random(),
+      val: amount > 0 ? `+${amount}` : amount,
+      x: e.clientX,
+      y: e.clientY
+    };
+    setFloatingTexts(prev => [...prev, newFloat]);
+    setTimeout(() => {
+      setFloatingTexts(prev => prev.filter(f => f.id !== newFloat.id));
+    }, 800);
+
+    modifyEggs(amount);
+  };
+
   const modifyEggs = (amount) => {
     const newTotal = Math.max(0, totalEggs + amount);
     const newStreak = Math.max(0, currentStreak + amount);
@@ -246,6 +316,11 @@ export default function App() {
     setDailyStats(newDailyStats);
     
     saveData(newTotal, newStreak, history, now, newDailyStats);
+  };
+
+  const openHugeModal = () => {
+    if (!isMuted) playHugeSound();
+    setIsHugeModalOpen(true);
   };
 
   const handleRegisterHuge = () => {
@@ -279,6 +354,16 @@ export default function App() {
     setIsResetModalOpen(false);
   };
 
+  // Bouton de partage (Discord)
+  const handleShare = (h, petInfo) => {
+    const text = `🏆 J'ai eu le ${petInfo.name} sur Grow a Garden après ${h.eggsTaken} œufs ouverts ! (growagardentracker.com)`;
+    try {
+      navigator.clipboard.writeText(text);
+      setCopiedId(h.id);
+      setTimeout(() => setCopiedId(null), 2000);
+    } catch (err) { console.error("Copie échouée"); }
+  };
+
   const filteredPets = useMemo(() => {
     if (!searchTerm) return PETS;
     return PETS.filter(pet => pet.name.toLowerCase().includes(searchTerm.toLowerCase()));
@@ -296,7 +381,7 @@ export default function App() {
     return `il y a ${days} j ${hours % 24} h`;
   };
 
-  // Calculs pour les statistiques
+  // Calculs statistiques
   const todayEggs = dailyStats[getTodayString()] || 0;
   const statsKeys = Object.keys(dailyStats);
   const totalTrackedDays = statsKeys.length;
@@ -312,6 +397,9 @@ export default function App() {
     return `${parts[2]}/${parts[1]}/${parts[0]}`;
   };
 
+  // Calcul de la "Chance" estimée (plus la pity monte, plus le ratio baisse)
+  const currentOdds = Math.max(1, 20000 - (currentStreak * 2));
+
   if (isLoading) return (
     <div className="min-h-screen bg-[#060a0e] flex flex-col items-center justify-center text-emerald-500">
       <div className="w-12 h-12 border-4 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin mb-4"></div>
@@ -320,10 +408,19 @@ export default function App() {
   );
 
   return (
-    // L'astuce est ici : lg:fixed lg:inset-0 force le site à faire exactement 100% de l'écran sur PC
-    // Sur mobile, on garde min-h-screen pour scroller normalement
     <div className="min-h-screen lg:fixed lg:inset-0 bg-[#060a0e] text-white font-sans flex flex-col lg:overflow-hidden pb-12 lg:pb-0">
       
+      {/* --- ANIMATIONS TEXTES FLOTTANTS --- */}
+      {floatingTexts.map(f => (
+        <div 
+          key={f.id} 
+          className="fixed z-[999] text-emerald-300 font-black text-4xl animate-float drop-shadow-[0_0_15px_rgba(16,185,129,0.8)] pointer-events-none"
+          style={{ left: f.x, top: f.y, transform: 'translate(-50%, -50%)' }}
+        >
+          {f.val}
+        </div>
+      ))}
+
       {/* --- TOP BAR GLOBALE --- */}
       <div className="flex-none w-full max-w-[1600px] mx-auto flex justify-between items-center p-4 lg:p-6 lg:px-10">
         {user && !user.isAnonymous ? (
@@ -339,22 +436,30 @@ export default function App() {
           </button>
         )}
 
-        <div className="flex items-center gap-2">
-          {isSaving ? (
-             <span className="text-[9px] font-black text-emerald-400 animate-pulse uppercase tracking-widest">Sauvegarde...</span>
-          ) : (
-             <span className="text-[9px] font-black text-slate-600 uppercase tracking-widest">Synchro Cloud OK</span>
-          )}
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={() => setIsMuted(!isMuted)} 
+            className="p-1.5 bg-slate-800/50 hover:bg-slate-700/50 rounded-lg text-slate-400 transition-colors border border-slate-700/50"
+            title={isMuted ? "Activer le son" : "Couper le son"}
+          >
+            {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+          </button>
+
+          <div className="flex items-center gap-2">
+            {isSaving ? (
+               <span className="text-[9px] font-black text-emerald-400 animate-pulse uppercase tracking-widest">Sauvegarde...</span>
+            ) : (
+               <span className="text-[9px] font-black text-slate-600 uppercase tracking-widest">Synchro Cloud OK</span>
+            )}
+          </div>
         </div>
       </div>
 
       {/* --- WRAPPER PRINCIPAL DES 3 COLONNES --- */}
-      {/* flex-1 permet de prendre la hauteur restante. min-h-0 empêche le débordement */}
       <div className="flex-1 w-full max-w-[1600px] mx-auto flex flex-col lg:flex-row items-center lg:items-stretch justify-center gap-6 xl:gap-10 px-4 lg:px-10 pb-4 lg:pb-8 min-h-0">
         
-        {/* === COLONNE 1 : STATISTIQUES (Visible uniquement sur PC) === */}
+        {/* === COLONNE 1 : STATISTIQUES === */}
         <div className="hidden lg:flex flex-col w-[320px] bg-[#111821] rounded-[3rem] p-8 border border-slate-800/50 shadow-2xl overflow-hidden shrink-0">
-          
           <div className="flex-none flex justify-between items-start mb-8">
             <div className="flex items-center gap-2 text-emerald-500">
               <BarChart2 className="w-5 h-5" />
@@ -374,7 +479,6 @@ export default function App() {
           <div className="flex-1 overflow-y-auto custom-scrollbar pr-3">
             <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest border-b border-slate-800 pb-3 mb-4">Historique par jour</h4>
             
-            {/* L'ancien badge est placé ici, en tête de liste ! */}
             <div className="bg-emerald-500/10 border border-emerald-500/30 px-4 py-3 rounded-2xl flex items-center gap-2.5 shadow-sm mb-4">
               <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></div>
               <span className="text-[11px] font-black text-emerald-400 uppercase tracking-widest mt-px">+{todayEggs} Aujourd'hui</span>
@@ -386,7 +490,7 @@ export default function App() {
               <div className="space-y-2.5">
                 {sortedDailyStats.map(([date, count]) => {
                   const isToday = date === getTodayString();
-                  if (isToday) return null; // Ne pas afficher 2 fois aujourd'hui
+                  if (isToday) return null;
                   return (
                     <div key={date} className="flex justify-between items-center p-4 rounded-2xl border bg-[#0a0f14] border-slate-800">
                       <div className="flex items-center gap-2.5 text-slate-400">
@@ -402,11 +506,9 @@ export default function App() {
           </div>
         </div>
 
-        {/* === COLONNE 2 : L'APPLICATION (Le coeur du tracker) === */}
-        {/* On gère l'overflow-y-auto en interne pour éviter de casser le design si l'écran est petit verticalement */}
+        {/* === COLONNE 2 : L'APPLICATION === */}
         <div className="flex-1 w-full max-w-md lg:max-w-[500px] flex flex-col bg-[#111821] rounded-[3rem] border border-slate-800/50 shadow-2xl overflow-hidden relative">
           
-          {/* Header */}
           <div className="flex-none w-full bg-gradient-to-b from-[#107c64] to-[#0a4d3e] p-8 flex flex-row items-center justify-center gap-6 relative border-b border-white/5 overflow-hidden">
             <div className="relative group flex-shrink-0 flex justify-center items-center w-20 h-20">
               {!imageError ? (
@@ -428,8 +530,6 @@ export default function App() {
               </h1>
               <p className="text-emerald-300 font-bold text-sm uppercase tracking-widest mt-1 opacity-80">Tracker Personnel</p>
             </div>
-
-            {/* Bouton Stats Mobile */}
             <button 
               onClick={() => setIsStatsModalOpen(true)}
               className="lg:hidden absolute top-4 right-4 bg-black/20 hover:bg-black/30 p-2.5 rounded-xl text-white/70 transition-colors backdrop-blur-sm"
@@ -438,22 +538,22 @@ export default function App() {
             </button>
           </div>
 
-          {/* Zone Statistiques (Milieu) */}
           <div className="flex-none grid grid-cols-2 divide-x divide-slate-800/50 border-b border-slate-800/50">
             <div className="p-6 lg:p-8 text-center flex flex-col justify-center min-w-0">
               <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 lg:mb-2">Œufs Ouverts</p>
-              {/* Le truncate PX-2 résout le bug de l'affichage écrasé de ta capture */}
               <p className="text-4xl lg:text-5xl font-black text-white tabular-nums tracking-tighter leading-none truncate px-2">{totalEggs}</p>
+              {/* Info Bonus stat vide pour aligner visuellement avec l'autre colonne */}
+              <p className="text-[9px] text-slate-800 font-bold uppercase mt-2 select-none opacity-0">Alignement</p>
             </div>
             <div className="p-6 lg:p-8 text-center flex flex-col justify-center bg-orange-500/[0.03] min-w-0">
               <p className="text-[10px] font-black text-orange-500/80 uppercase tracking-widest mb-1 lg:mb-2 italic">Pity Actuelle</p>
               <p className="text-4xl lg:text-5xl font-black text-orange-400 tabular-nums tracking-tighter leading-none truncate px-2">{currentStreak}</p>
+              {/* Le calcul de chance de drop direct ! */}
+              <p className="text-[9px] text-orange-500/50 font-bold uppercase mt-2">Chance : 1 sur ~{currentOdds.toLocaleString('fr-FR')}</p>
             </div>
           </div>
 
-          {/* Panneau de Contrôle - Défilable si besoin */}
-          <div className="flex-1 overflow-y-auto custom-scrollbar p-6 lg:p-8 flex flex-col justify-between space-y-8">
-            
+          <div className="flex-1 overflow-y-auto custom-scrollbar p-6 lg:p-8 flex flex-col justify-between space-y-8 relative">
             <div className="space-y-6 lg:space-y-8">
               <div className="space-y-4">
                 <div className="flex items-center gap-3 px-2">
@@ -461,11 +561,11 @@ export default function App() {
                   <span className="text-[9px] lg:text-[10px] font-black text-emerald-500 uppercase tracking-[0.3em]">Ouvrir des œufs</span>
                   <div className="h-px flex-1 bg-slate-800"></div>
                 </div>
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-3 gap-4 relative">
                   {[1, 5, 13].map(val => (
                     <button 
                       key={`+${val}`}
-                      onClick={() => modifyEggs(val)}
+                      onClick={(e) => handleAddEggs(val, e)}
                       className="bg-[#107c64] hover:bg-[#14a384] active:scale-95 text-white py-5 lg:py-6 rounded-2xl font-black text-2xl lg:text-3xl transition-all shadow-[0_8px_0_rgb(10,77,62)] hover:shadow-[0_4px_0_rgb(10,77,62)] hover:translate-y-[4px] active:translate-y-[8px] active:shadow-none"
                     >
                       +{val}
@@ -484,7 +584,7 @@ export default function App() {
                   {[1, 5, 13].map(val => (
                     <button 
                       key={`-${val}`}
-                      onClick={() => modifyEggs(-val)}
+                      onClick={(e) => handleAddEggs(-val, e)}
                       disabled={totalEggs === 0}
                       className="bg-slate-800/50 hover:bg-slate-800 active:scale-95 text-slate-500 py-3 lg:py-4 rounded-2xl font-bold text-base lg:text-lg transition-all border border-slate-700 disabled:opacity-20 disabled:pointer-events-none"
                     >
@@ -510,7 +610,7 @@ export default function App() {
               </div>
 
               <button 
-                onClick={() => setIsHugeModalOpen(true)}
+                onClick={openHugeModal}
                 className="w-full bg-gradient-to-b from-orange-400 to-orange-600 hover:from-orange-300 hover:to-orange-500 text-[#060a0e] py-6 lg:py-7 rounded-[2rem] font-black text-2xl lg:text-3xl shadow-xl transition-all flex flex-col items-center justify-center gap-2 transform active:scale-95 border-b-[6px] border-orange-800 hover:border-b-[3px] hover:translate-y-[3px] active:border-b-0 active:translate-y-[6px]"
               >
                 <div className="flex items-center gap-3">
@@ -519,7 +619,6 @@ export default function App() {
                 </div>
               </button>
             </div>
-
           </div>
         </div>
 
@@ -548,9 +647,10 @@ export default function App() {
             ) : (
               history.map((h, i) => {
                 const petInfo = PETS.find(p => p.id === h.petId) || { name: 'Huge Inconnu', emoji: '🏆', image: null };
+                const isCopied = copiedId === h.id;
                 
                 return (
-                  <div key={h.id} className="bg-[#0a0f14] border border-slate-800/50 rounded-3xl p-5 flex items-center gap-4 shadow-lg hover:border-slate-700 transition-colors">
+                  <div key={h.id} className="bg-[#0a0f14] border border-slate-800/50 rounded-3xl p-5 flex items-center gap-4 shadow-lg hover:border-slate-700 transition-colors relative group">
                     <div className="w-20 h-20 shrink-0 bg-[#060a0e] rounded-2xl flex items-center justify-center p-2 border border-slate-800 shadow-inner">
                       {petInfo.image ? (
                         <img src={petInfo.image} alt={petInfo.name} className="max-w-full max-h-full object-contain drop-shadow-md" onError={(e) => { e.target.style.display='none'; e.target.nextSibling.style.display='block'; }} />
@@ -573,6 +673,14 @@ export default function App() {
                         </div>
                       </div>
                     </div>
+                    {/* Bouton Partager (Apparait au survol de la case) */}
+                    <button 
+                      onClick={() => handleShare(h, petInfo)}
+                      className="absolute top-2 right-2 p-1.5 bg-slate-800/80 hover:bg-slate-700 rounded-lg text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm"
+                      title="Copier le message pour tes amis"
+                    >
+                      {isCopied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                    </button>
                   </div>
                 );
               })
@@ -580,7 +688,7 @@ export default function App() {
           </div>
         </div>
 
-      </div> {/* FIN DU WRAPPER */}
+      </div>
 
       {/* --- MODAL STATISTIQUES (Utilisée uniquement sur mobile) --- */}
       {isStatsModalOpen && (
@@ -723,7 +831,7 @@ export default function App() {
         </div>
       )}
 
-      {/* Force la page à ne pas défiler sur PC (overflow hidden) */}
+      {/* Force la page à ne pas défiler sur PC (overflow hidden) + Code des animations CSS */}
       <style dangerouslySetInnerHTML={{__html: `
         :root { background-color: #060a0e !important; }
         body { margin: 0 !important; padding: 0 !important; background-color: #060a0e !important; overflow: hidden !important; }
@@ -737,7 +845,15 @@ export default function App() {
           0%, 100% { transform: translateY(0) rotate(0deg); }
           50% { transform: translateY(-10px) rotate(3deg); }
         }
+        
+        @keyframes float-up-fade {
+          0% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+          100% { opacity: 0; transform: translate(-50%, -150px) scale(1.5); }
+        }
+        
         .animate-bounce-slow { animation: bounce-slow 5s ease-in-out infinite; }
+        .animate-float { animation: float-up-fade 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+        
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
         input[type=number]::-webkit-inner-spin-button, 
