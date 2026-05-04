@@ -319,7 +319,7 @@ export default function App() {
     <div className="min-h-screen bg-[#060a0e] text-white font-sans p-4 flex flex-col items-center pb-20">
       
       {/* Barre d'état & Connexion */}
-      <div className="w-full max-w-6xl flex justify-between items-center mb-6 px-4">
+      <div className="w-full max-w-5xl flex justify-between items-center mb-6 px-2 lg:px-0">
         {user && !user.isAnonymous ? (
           <button onClick={handleLogout} className="flex items-center gap-2 bg-emerald-900/40 hover:bg-emerald-800/60 transition-colors px-3 py-1.5 rounded-full border border-emerald-700 shadow-[0_0_10px_rgba(16,185,129,0.2)]">
             <Cloud className="w-3 h-3 text-emerald-400" />
@@ -342,24 +342,26 @@ export default function App() {
         </div>
       </div>
 
-      {/* --- WRAPPER PRINCIPAL DESKTOP (3 COLONNES) --- */}
-      <div className="w-full max-w-6xl flex flex-col lg:flex-row gap-8 lg:items-start lg:justify-center">
+      {/* --- WRAPPER PRINCIPAL UNIFIÉ (DASHBOARD) --- */}
+      {/* C'est ce conteneur qui rassemble tout et évite l'effet "bulles moches déconnectées" */}
+      <div className="w-full max-w-5xl lg:bg-[#0c1219] lg:border border-slate-800/60 lg:rounded-[2rem] lg:p-4 flex flex-col lg:flex-row gap-6 lg:gap-5 items-stretch lg:shadow-2xl">
         
         {/* === COLONNE GAUCHE : STATISTIQUES (Visible uniquement sur PC) === */}
-        <div className="hidden lg:flex w-[300px] flex-col bg-[#111821] border border-slate-800/50 rounded-[2.5rem] p-6 shadow-xl shrink-0 lg:sticky lg:top-6">
-          <div className="flex justify-between items-center mb-6 px-2">
+        <div className="hidden lg:flex w-[260px] xl:w-[280px] flex-col bg-[#111821] rounded-2xl p-6 border border-slate-800/50 shadow-inner">
+          <div className="flex justify-between items-center mb-5 px-1">
             <div className="flex items-center gap-2 text-emerald-500">
               <BarChart2 className="w-5 h-5" />
               <h2 className="text-sm font-black uppercase tracking-[0.2em]">Statistiques</h2>
             </div>
-            {/* Le badge a été déplacé ici ! */}
-            <div className="bg-emerald-500/10 border border-emerald-500/30 px-2.5 py-1 rounded-lg flex items-center gap-1.5 shadow-sm" title="Œufs ouverts aujourd'hui">
-               <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
-               <span className="text-[9px] font-black text-emerald-400 uppercase tracking-widest mt-px">+{todayEggs} Auj.</span>
-            </div>
           </div>
           
-          <div className="bg-emerald-900/20 border border-emerald-500/30 rounded-3xl p-5 text-center shadow-inner mb-6">
+          {/* Badge Auj déplacé sous le titre pour plus de clarté */}
+          <div className="bg-emerald-500/10 border border-emerald-500/30 px-3 py-2.5 rounded-xl flex items-center justify-center gap-2 shadow-sm mb-6">
+             <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+             <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest mt-px">+{todayEggs} Aujourd'hui</span>
+          </div>
+          
+          <div className="bg-emerald-900/20 border border-emerald-500/30 rounded-2xl p-5 text-center shadow-inner mb-6">
             <p className="text-[10px] font-black text-emerald-500/80 uppercase tracking-widest mb-1">Moyenne quotidienne</p>
             <div className="flex items-end justify-center gap-1">
               <span className="text-4xl font-black text-emerald-400 tabular-nums tracking-tighter leading-none">{averagePerDay}</span>
@@ -368,7 +370,7 @@ export default function App() {
             <p className="text-[9px] text-slate-500 font-bold uppercase mt-2">Sur {totalTrackedDays} jour(s)</p>
           </div>
 
-          <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-2 max-h-[400px]">
+          <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-2">
             <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest border-b border-slate-800 pb-2 mb-3">Historique par jour</h4>
             {sortedDailyStats.length === 0 ? (
               <p className="text-xs text-slate-600 text-center py-4 font-bold">Aucune donnée.</p>
@@ -376,7 +378,7 @@ export default function App() {
               sortedDailyStats.map(([date, count]) => {
                 const isToday = date === getTodayString();
                 return (
-                  <div key={date} className={`flex justify-between items-center p-3 rounded-2xl border ${isToday ? 'bg-emerald-900/10 border-emerald-500/30' : 'bg-[#0a0f14] border-slate-800'}`}>
+                  <div key={date} className={`flex justify-between items-center p-3 rounded-xl border ${isToday ? 'bg-emerald-900/10 border-emerald-500/30' : 'bg-[#0a0f14] border-slate-800'}`}>
                     <div className="flex items-center gap-2 text-slate-400">
                       <Calendar className={`w-3 h-3 ${isToday ? 'text-emerald-500' : 'text-slate-600'}`} />
                       <span className="text-[10px] font-bold">{isToday ? "Aujourd'hui" : formatDateString(date)}</span>
@@ -390,10 +392,11 @@ export default function App() {
         </div>
 
         {/* === COLONNE CENTRALE : L'APPLICATION === */}
-        <div className="w-full max-w-md shrink-0 flex flex-col shadow-2xl rounded-[3rem]">
+        {/* Design affiné, bordures moins exagérées, background mieux intégré */}
+        <div className="flex-1 max-w-md mx-auto lg:max-w-none flex flex-col bg-[#111821] rounded-[2.5rem] lg:rounded-2xl border border-slate-800/50 lg:shadow-xl overflow-hidden shrink-0 w-full">
           
           {/* Header */}
-          <div className="w-full bg-gradient-to-b from-[#107c64] to-[#0a4d3e] p-8 rounded-t-[3rem] flex flex-row items-center justify-center gap-6 relative border-t border-white/10 overflow-hidden">
+          <div className="w-full bg-gradient-to-b from-[#107c64] to-[#0a4d3e] p-8 flex flex-row items-center justify-center gap-6 relative border-b border-slate-800/50 overflow-hidden">
             <div className="relative group cursor-pointer flex-shrink-0 flex justify-center items-center w-20 h-20">
               <div className="absolute inset-0 bg-white/20 blur-2xl rounded-full scale-150 opacity-50 group-hover:opacity-100 transition-opacity"></div>
               {!imageError ? (
@@ -409,40 +412,41 @@ export default function App() {
                 </div>
               )}
             </div>
-            <h1 className="text-2xl font-black text-white uppercase tracking-wider text-left drop-shadow-lg leading-tight">
+            <h1 className="text-2xl font-black text-white uppercase tracking-wider text-left drop-shadow-lg leading-tight z-10">
               GROW A GARDEN<br/>
               <span className="text-emerald-300 text-base opacity-80">Tracker Personnel</span>
             </h1>
           </div>
 
           {/* Zone Statistiques (Milieu) */}
-          <div className="w-full bg-[#111821] border-x border-slate-800/50">
-            <div className="grid grid-cols-2 divide-x divide-slate-800/50">
+          <div className="grid grid-cols-2 divide-x divide-slate-800/50 border-b border-slate-800/50 bg-[#0d131a]/50">
+            <div className="relative p-6 text-center flex flex-col justify-center">
+              {/* Le badge mobile uniquement */}
+              <div className="lg:hidden absolute top-3 left-4 bg-emerald-500/10 border border-emerald-500/30 px-2 py-1 rounded-md flex items-center gap-1.5 shadow-sm">
+                 <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
+                 <span className="text-[8px] font-black text-emerald-400 uppercase tracking-widest mt-px">+{todayEggs}</span>
+              </div>
               
-              <div className="relative p-8 text-center border-b border-slate-800/50 flex flex-col justify-center">
-                {/* L'ancien badge a été supprimé d'ici ! */}
-                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 mt-2">Œufs Ouverts</p>
-                <p className="text-4xl font-black text-white tabular-nums tracking-tighter leading-none">{totalEggs}</p>
-              </div>
+              <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 mt-2">Œufs Ouverts</p>
+              <p className="text-4xl font-black text-white tabular-nums tracking-tighter leading-none">{totalEggs}</p>
+            </div>
 
-              <div className="relative p-8 text-center bg-orange-500/[0.03] border-b border-slate-800/50 flex flex-col justify-center">
-                {/* Bouton visible uniquement sur mobile (lg:hidden) */}
-                <button 
-                  onClick={() => setIsStatsModalOpen(true)}
-                  className="lg:hidden absolute top-3 right-4 bg-slate-800/50 hover:bg-emerald-900/50 p-2 rounded-xl text-slate-500 hover:text-emerald-400 transition-colors border border-slate-700/50 hover:border-emerald-500/50 shadow-sm"
-                  title="Voir les statistiques"
-                >
-                  <BarChart2 className="w-4 h-4" />
-                </button>
-                
-                <p className="text-[10px] font-black text-orange-500/80 uppercase tracking-widest mb-1 italic mt-2">Pity Actuelle</p>
-                <p className="text-4xl font-black text-orange-400 tabular-nums tracking-tighter leading-none">{currentStreak}</p>
-              </div>
+            <div className="relative p-6 text-center flex flex-col justify-center bg-orange-500/[0.02]">
+              {/* Bouton mobile uniquement */}
+              <button 
+                onClick={() => setIsStatsModalOpen(true)}
+                className="lg:hidden absolute top-2 right-3 bg-slate-800/50 hover:bg-emerald-900/50 p-1.5 rounded-lg text-slate-500 hover:text-emerald-400 transition-colors border border-slate-700/50 shadow-sm"
+              >
+                <BarChart2 className="w-4 h-4" />
+              </button>
+              
+              <p className="text-[10px] font-black text-orange-500/80 uppercase tracking-widest mb-1 italic mt-2">Pity Actuelle</p>
+              <p className="text-4xl font-black text-orange-400 tabular-nums tracking-tighter leading-none">{currentStreak}</p>
             </div>
           </div>
 
           {/* Panneau de Contrôle */}
-          <div className="w-full bg-[#111821] p-8 border-x border-b border-slate-800/50 rounded-b-[3rem] space-y-8">
+          <div className="p-6 lg:p-8 flex-1 flex flex-col justify-between space-y-6">
             <div className="space-y-6">
               <div className="space-y-4">
                 <div className="flex items-center gap-3 px-2">
@@ -455,7 +459,7 @@ export default function App() {
                     <button 
                       key={`+${val}`}
                       onClick={() => modifyEggs(val)}
-                      className="bg-[#107c64] hover:bg-[#14a384] active:scale-90 text-white py-5 rounded-2xl font-black text-2xl transition-all shadow-[0_8px_0_rgb(10,77,62)] hover:shadow-[0_4px_0_rgb(10,77,62)] hover:translate-y-[4px] active:translate-y-[8px] active:shadow-none"
+                      className="bg-[#107c64] hover:bg-[#14a384] active:scale-90 text-white py-5 rounded-2xl font-black text-2xl transition-all shadow-[0_6px_0_rgb(10,77,62)] hover:shadow-[0_3px_0_rgb(10,77,62)] hover:translate-y-[3px] active:translate-y-[6px] active:shadow-none"
                     >
                       +{val}
                     </button>
@@ -491,32 +495,29 @@ export default function App() {
               </div>
             </div>
 
-            <div className="h-px w-full bg-slate-800/50 my-6"></div>
-
-            <div>
+            <div className="pt-6">
               <div className="text-center mb-3">
                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-                   Dernier Huge obtenu : <span className="text-orange-400 font-black">{history.length > 0 ? formatRelativeTime(history[0].timestamp) : "Aucun"}</span>
+                   Dernier Huge : <span className="text-orange-400 font-black">{history.length > 0 ? formatRelativeTime(history[0].timestamp) : "Aucun"}</span>
                  </p>
               </div>
 
               <button 
                 onClick={() => setIsHugeModalOpen(true)}
-                className="w-full bg-gradient-to-b from-orange-400 to-orange-600 hover:from-orange-300 hover:to-orange-500 text-[#060a0e] py-7 rounded-[2rem] font-black text-2xl shadow-xl transition-all flex flex-col items-center justify-center gap-1 transform active:scale-95 border-b-[6px] border-orange-800 hover:border-b-[4px] hover:translate-y-[2px] active:border-b-0 active:translate-y-[6px]"
+                className="w-full bg-gradient-to-b from-orange-400 to-orange-600 hover:from-orange-300 hover:to-orange-500 text-[#060a0e] py-6 rounded-2xl font-black text-2xl shadow-xl transition-all flex flex-col items-center justify-center gap-1 transform active:scale-95 border-b-[6px] border-orange-800 hover:border-b-[4px] hover:translate-y-[2px] active:border-b-0 active:translate-y-[6px]"
               >
                 <div className="flex items-center gap-3">
-                  <Trophy className="w-8 h-8" />
+                  <Trophy className="w-7 h-7" />
                   HUGE OBTENU !
                 </div>
-                <span className="text-[9px] uppercase tracking-[0.2em] font-black opacity-60">Enregistrer dans le cloud</span>
               </button>
             </div>
           </div>
         </div>
 
         {/* === COLONNE DROITE : HISTORIQUE === */}
-        <div className="w-full max-w-md lg:w-[320px] xl:w-[350px] shrink-0 bg-[#111821] border border-slate-800/50 rounded-[2.5rem] p-6 shadow-xl flex flex-col lg:sticky lg:top-6 mt-8 lg:mt-0">
-          <div className="flex justify-between items-center mb-6 px-2">
+        <div className="w-full lg:w-[300px] xl:w-[320px] shrink-0 bg-[#111821] lg:rounded-2xl rounded-[2.5rem] p-6 border border-slate-800/50 lg:shadow-inner flex flex-col mt-8 lg:mt-0">
+          <div className="flex justify-between items-center mb-5 px-1">
             <h2 className="text-sm font-black text-slate-500 uppercase tracking-[0.2em] flex items-center gap-2">
               <History className="w-4 h-4" /> Journal
             </h2>
@@ -527,9 +528,9 @@ export default function App() {
             )}
           </div>
 
-          <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-3 max-h-[500px] lg:max-h-[600px]">
+          <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-3">
             {history.length === 0 ? (
-              <div className="text-center py-16 bg-[#0a0f14] rounded-[2rem] border border-dashed border-slate-800/50 text-slate-800 text-[10px] font-black uppercase tracking-widest flex flex-col items-center gap-4">
+              <div className="text-center py-16 bg-[#0a0f14] rounded-2xl border border-dashed border-slate-800/50 text-slate-800 text-[10px] font-black uppercase tracking-widest flex flex-col items-center gap-4">
                 <div className="w-12 h-12 rounded-full border border-slate-900 flex items-center justify-center">
                    <EggIcon />
                 </div>
@@ -540,26 +541,26 @@ export default function App() {
                 const petInfo = PETS.find(p => p.id === h.petId) || { name: 'Huge Inconnu', emoji: '🏆', image: null };
                 
                 return (
-                  <div key={h.id} className="bg-[#111821] border border-slate-800/40 rounded-2xl p-4 flex items-center gap-3 shadow-lg hover:border-slate-700 transition-colors">
-                    <div className="w-16 h-16 shrink-0 bg-gradient-to-br from-slate-800 to-[#0a0f14] rounded-xl flex items-center justify-center p-2 border border-slate-700/50 shadow-inner">
+                  <div key={h.id} className="bg-[#111821] border border-slate-800/40 rounded-xl p-3 flex items-center gap-3 shadow-md hover:border-slate-700 transition-colors">
+                    <div className="w-14 h-14 shrink-0 bg-gradient-to-br from-slate-800 to-[#0a0f14] rounded-lg flex items-center justify-center p-1.5 border border-slate-700/50 shadow-inner">
                       {petInfo.image ? (
                         <img src={petInfo.image} alt={petInfo.name} className="max-w-full max-h-full object-contain drop-shadow-[0_5px_10px_rgba(0,0,0,0.5)]" onError={(e) => { e.target.style.display='none'; e.target.nextSibling.style.display='block'; }} />
                       ) : null}
-                      <span className="text-3xl drop-shadow-md" style={{ display: petInfo.image ? 'none' : 'block' }}>{petInfo.emoji}</span>
+                      <span className="text-2xl drop-shadow-md" style={{ display: petInfo.image ? 'none' : 'block' }}>{petInfo.emoji}</span>
                     </div>
-                    <div className="flex-1 flex flex-col justify-center gap-2">
+                    <div className="flex-1 flex flex-col justify-center gap-1.5">
                       <div className="flex justify-between items-start">
-                        <span className="text-orange-500 font-black uppercase tracking-wider text-[11px] lg:text-xs drop-shadow-sm leading-none pt-1">{petInfo.name}</span>
-                        <span className="text-[9px] text-slate-500 font-bold tabular-nums text-right leading-tight">{h.date}</span>
+                        <span className="text-orange-500 font-black uppercase tracking-wider text-[10px] lg:text-[11px] drop-shadow-sm leading-none pt-1">{petInfo.name}</span>
+                        <span className="text-[8px] text-slate-500 font-bold tabular-nums text-right leading-tight">{h.date}</span>
                       </div>
                       <div className="flex justify-between items-end">
-                        <div className="bg-emerald-500/10 text-emerald-400 px-3 py-1.5 rounded-lg border border-emerald-500/30 font-black flex flex-col justify-center shadow-sm min-w-[60px]">
-                          <span className="text-[8px] opacity-70 uppercase tracking-widest mb-0.5">Poids</span>
-                          <span className="text-sm leading-none">{h.weight} <span className="text-[9px] opacity-80">KG</span></span>
+                        <div className="bg-emerald-500/10 text-emerald-400 px-2.5 py-1 rounded-md border border-emerald-500/30 font-black flex flex-col justify-center shadow-sm min-w-[50px]">
+                          <span className="text-[7px] opacity-70 uppercase tracking-widest mb-0.5">Poids</span>
+                          <span className="text-xs leading-none">{h.weight} <span className="text-[8px] opacity-80">KG</span></span>
                         </div>
                         <div className="text-right">
-                          <p className="text-[8px] text-slate-500 uppercase font-black tracking-widest leading-none mb-1">Chance</p>
-                          <p className="text-xl font-black text-white tabular-nums leading-none tracking-tighter">{h.eggsTaken}</p>
+                          <p className="text-[7px] text-slate-500 uppercase font-black tracking-widest leading-none mb-1">Chance</p>
+                          <p className="text-lg font-black text-white tabular-nums leading-none tracking-tighter">{h.eggsTaken}</p>
                         </div>
                       </div>
                     </div>
@@ -569,12 +570,13 @@ export default function App() {
             )}
           </div>
         </div>
-      </div>
+
+      </div> {/* FIN DU WRAPPER DASHBOARD */}
 
       {/* --- MODAL STATISTIQUES (Utilisée uniquement sur mobile) --- */}
       {isStatsModalOpen && (
         <div className="fixed inset-0 bg-black/95 backdrop-blur-md z-[100] flex items-center justify-center p-6 lg:hidden">
-          <div className="bg-[#111821] border border-slate-800 rounded-[3.5rem] w-full max-w-sm shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[85vh]">
+          <div className="bg-[#111821] border border-slate-800 rounded-[2.5rem] w-full max-w-sm shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[85vh]">
             <div className="bg-emerald-600 p-6 flex justify-between items-center shrink-0">
               <h3 className="text-xl font-black text-white uppercase tracking-tighter flex items-center gap-2">
                 <BarChart2 className="w-6 h-6" /> STATISTIQUES
@@ -583,16 +585,7 @@ export default function App() {
             </div>
             
             <div className="p-8 space-y-6 overflow-y-auto custom-scrollbar flex-1">
-              
-              {/* Le badge a été déplacé ici pour le mobile ! */}
-              <div className="flex justify-center -mt-2 mb-2">
-                 <div className="bg-emerald-500/10 border border-emerald-500/30 px-3 py-1.5 rounded-full flex items-center gap-2 shadow-sm">
-                   <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-                   <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest mt-px">Aujourd'hui : +{todayEggs}</span>
-                 </div>
-              </div>
-
-              <div className="bg-emerald-900/20 border border-emerald-500/30 rounded-3xl p-6 text-center shadow-inner">
+              <div className="bg-emerald-900/20 border border-emerald-500/30 rounded-2xl p-6 text-center shadow-inner">
                 <p className="text-[10px] font-black text-emerald-500/80 uppercase tracking-widest mb-2">Moyenne quotidienne</p>
                 <div className="flex items-end justify-center gap-2">
                   <span className="text-5xl font-black text-emerald-400 tabular-nums tracking-tighter leading-none">{averagePerDay}</span>
@@ -611,12 +604,12 @@ export default function App() {
                     {sortedDailyStats.map(([date, count]) => {
                       const isToday = date === getTodayString();
                       return (
-                        <div key={date} className={`flex justify-between items-center p-4 rounded-2xl border ${isToday ? 'bg-emerald-900/10 border-emerald-500/30' : 'bg-[#0a0f14] border-slate-800'}`}>
+                        <div key={date} className={`flex justify-between items-center p-3 rounded-xl border ${isToday ? 'bg-emerald-900/10 border-emerald-500/30' : 'bg-[#0a0f14] border-slate-800'}`}>
                           <div className="flex items-center gap-3 text-slate-400">
                             <Calendar className={`w-4 h-4 ${isToday ? 'text-emerald-500' : 'text-slate-600'}`} />
                             <span className="text-xs font-bold">{isToday ? "Aujourd'hui" : formatDateString(date)}</span>
                           </div>
-                          <span className={`text-lg font-black tabular-nums ${isToday ? 'text-emerald-400' : 'text-white'}`}>+{count}</span>
+                          <span className={`text-base font-black tabular-nums ${isToday ? 'text-emerald-400' : 'text-white'}`}>+{count}</span>
                         </div>
                       );
                     })}
@@ -631,7 +624,7 @@ export default function App() {
       {/* --- MODAL HUGE OBTENU --- */}
       {isHugeModalOpen && (
         <div className="fixed inset-0 bg-black/98 backdrop-blur-xl z-[100] flex items-center justify-center p-6">
-          <div className="bg-[#111821] border border-slate-800 rounded-[3.5rem] w-full max-w-md shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+          <div className="bg-[#111821] border border-slate-800 rounded-[2.5rem] w-full max-w-md shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
             <div className="bg-orange-500 p-6 flex justify-between items-center shrink-0">
               <h3 className="text-xl font-black text-[#060a0e] uppercase tracking-tighter italic">MAGNIFIQUE !</h3>
               <button onClick={() => { setIsHugeModalOpen(false); setSearchTerm(""); }} className="bg-black/10 p-2 rounded-full text-[#060a0e] transition-colors"><X /></button>
@@ -656,7 +649,7 @@ export default function App() {
                     placeholder="Rechercher un familier..." 
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full bg-[#0a0f14] border-2 border-slate-800 rounded-2xl py-3 pl-10 pr-4 text-white text-sm font-bold focus:border-orange-500 outline-none transition-all shadow-inner"
+                    className="w-full bg-[#0a0f14] border-2 border-slate-800 rounded-xl py-3 pl-10 pr-4 text-white text-sm font-bold focus:border-orange-500 outline-none transition-all shadow-inner"
                   />
                 </div>
 
@@ -665,13 +658,13 @@ export default function App() {
                     <button
                       key={pet.id}
                       onClick={() => setSelectedPet(pet)}
-                      className={`p-3 rounded-2xl border-2 transition-all flex flex-col items-center justify-center gap-2 ${selectedPet.id === pet.id ? 'border-orange-500 bg-orange-500/10 scale-105 shadow-lg' : 'border-slate-800 bg-[#0a0f14] hover:border-slate-700 hover:bg-slate-900/50'}`}
+                      className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center justify-center gap-2 ${selectedPet.id === pet.id ? 'border-orange-500 bg-orange-500/10 scale-105 shadow-lg' : 'border-slate-800 bg-[#0a0f14] hover:border-slate-700 hover:bg-slate-900/50'}`}
                     >
-                      <div className="w-12 h-12 flex items-center justify-center">
+                      <div className="w-10 h-10 flex items-center justify-center mt-1">
                         {pet.image ? (
                           <img src={pet.image} alt={pet.name} className="max-w-full max-h-full object-contain drop-shadow-md" onError={(e) => { e.target.style.display='none'; e.target.nextSibling.style.display='block'; }} />
                         ) : null}
-                        <span className="text-3xl drop-shadow-md" style={{ display: pet.image ? 'none' : 'block' }}>{pet.emoji}</span>
+                        <span className="text-2xl drop-shadow-md" style={{ display: pet.image ? 'none' : 'block' }}>{pet.emoji}</span>
                       </div>
                       <span className="text-[9px] font-black uppercase text-center text-slate-300 leading-tight">{pet.name.replace('Huge ', '')}</span>
                     </button>
@@ -684,13 +677,13 @@ export default function App() {
               <div className="text-left space-y-3 pt-2 border-t border-slate-800/50">
                 <label className="text-[10px] font-black text-slate-500 uppercase ml-2 tracking-widest">Indiquer le poids (KG)</label>
                 <input 
-                  type="number" step={0.01} placeholder="ex: 10.18"
+                  type="number" step="0.01" placeholder="ex: 10.18"
                   value={hugeWeight} onChange={(e) => setHugeWeight(e.target.value)}
-                  className="w-full bg-[#060a0e] border-2 border-slate-800 rounded-[2rem] p-4 text-white text-2xl font-black focus:border-orange-500 outline-none transition-all shadow-inner text-center"
+                  className="w-full bg-[#060a0e] border-2 border-slate-800 rounded-2xl p-4 text-white text-2xl font-black focus:border-orange-500 outline-none transition-all shadow-inner text-center"
                 />
               </div>
 
-              <button onClick={handleRegisterHuge} className="w-full bg-orange-500 text-[#060a0e] font-black py-5 rounded-[2rem] text-xl shadow-xl hover:bg-orange-400 active:scale-95 transition-all uppercase tracking-[0.2em] border-b-4 border-orange-800 shrink-0">
+              <button onClick={handleRegisterHuge} className="w-full bg-orange-500 text-[#060a0e] font-black py-4 rounded-2xl text-xl shadow-xl hover:bg-orange-400 active:scale-95 transition-all uppercase tracking-[0.2em] border-b-4 border-orange-800 shrink-0">
                 ENREGISTRER
               </button>
             </div>
@@ -701,15 +694,15 @@ export default function App() {
       {/* Modal Reset */}
       {isResetModalOpen && (
         <div className="fixed inset-0 bg-black/90 backdrop-blur-md z-[100] flex items-center justify-center p-6 text-center">
-          <div className="bg-[#111821] border border-slate-800 rounded-[3rem] p-12 w-full max-w-xs shadow-2xl">
-            <div className="w-20 h-20 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center mx-auto mb-6">
-              <RotateCcw className="w-10 h-10 text-red-500" />
+          <div className="bg-[#111821] border border-slate-800 rounded-[2.5rem] p-10 w-full max-w-xs shadow-2xl">
+            <div className="w-16 h-16 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center mx-auto mb-6">
+              <RotateCcw className="w-8 h-8 text-red-500" />
             </div>
-            <h3 className="text-2xl font-black text-white mb-4 uppercase tracking-tighter">TOUT SUPPRIMER ?</h3>
-            <p className="text-slate-500 text-sm mb-10 font-medium">Tes statistiques et ton historique cloud seront perdus à jamais.</p>
-            <div className="flex flex-col gap-4">
-              <button onClick={() => setIsResetModalOpen(false)} className="bg-slate-800 py-5 rounded-2xl font-black uppercase tracking-widest text-xs border border-slate-700">ANNULER</button>
-              <button onClick={handleResetAll} className="bg-red-600 py-5 rounded-2xl font-black uppercase tracking-widest text-xs shadow-xl shadow-red-900/30 text-white">OUI, TOUT EFFACER</button>
+            <h3 className="text-xl font-black text-white mb-4 uppercase tracking-tighter">TOUT SUPPRIMER ?</h3>
+            <p className="text-slate-500 text-xs mb-8 font-medium">Tes statistiques et ton historique cloud seront perdus à jamais.</p>
+            <div className="flex flex-col gap-3">
+              <button onClick={() => setIsResetModalOpen(false)} className="bg-slate-800 py-4 rounded-xl font-black uppercase tracking-widest text-[10px] border border-slate-700">ANNULER</button>
+              <button onClick={handleResetAll} className="bg-red-600 py-4 rounded-xl font-black uppercase tracking-widest text-[10px] shadow-xl shadow-red-900/30 text-white">OUI, TOUT EFFACER</button>
             </div>
           </div>
         </div>
