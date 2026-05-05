@@ -133,7 +133,7 @@ const playPopSound = () => {
     gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
     osc.start();
     osc.stop(audioCtx.currentTime + 0.1);
-  } catch (e) { console.warn("Audio bloqué par le navigateur", e); }
+  } catch (e) { console.warn("Audio bloqué", e); }
 };
 
 const playHugeSound = () => {
@@ -146,10 +146,10 @@ const playHugeSound = () => {
     gain.connect(audioCtx.destination);
     osc.type = 'square';
     const t = audioCtx.currentTime;
-    osc.frequency.setValueAtTime(392.00, t); // Sol
-    osc.frequency.setValueAtTime(523.25, t + 0.15); // Do
-    osc.frequency.setValueAtTime(659.25, t + 0.3); // Mi
-    osc.frequency.setValueAtTime(783.99, t + 0.45); // Sol aigu
+    osc.frequency.setValueAtTime(392.00, t); 
+    osc.frequency.setValueAtTime(523.25, t + 0.15); 
+    osc.frequency.setValueAtTime(659.25, t + 0.3); 
+    osc.frequency.setValueAtTime(783.99, t + 0.45); 
     gain.gain.setValueAtTime(0.05, t);
     gain.gain.setValueAtTime(0.05, t + 0.5);
     gain.gain.linearRampToValueAtTime(0, t + 1);
@@ -180,18 +180,15 @@ export default function App() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedPet, setSelectedPet] = useState(PETS[0]);
 
-  // Nouveaux états pour les fonctionnalités bonus
   const [isMuted, setIsMuted] = useState(false);
   const [floatingTexts, setFloatingTexts] = useState([]);
   const [copiedId, setCopiedId] = useState(null);
 
-  // Horloge en temps réel
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(Date.now()), 1000);
     return () => clearInterval(timer);
   }, []);
 
-  // 1. Gestion de la connexion
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
@@ -212,13 +209,12 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
-  // 2. Fonctions Google
   const handleGoogleLogin = async () => {
     const provider = new GoogleAuthProvider();
     try {
       await signInWithPopup(auth, provider);
     } catch (error) {
-      console.error("Erreur de connexion:", error);
+      console.error("Erreur connexion:", error);
     }
   };
 
@@ -235,7 +231,6 @@ export default function App() {
     }
   };
 
-  // 3. Synchronisation Cloud
   useEffect(() => {
     if (!user) return;
     const docRef = doc(db, 'artifacts', appId, 'users', user.uid, 'eggCounter', 'mainData');
@@ -257,13 +252,12 @@ export default function App() {
       }
       setIsLoading(false);
     }, (error) => {
-      console.error("Erreur Sync Cloud:", error);
+      console.error("Erreur Sync:", error);
       setIsLoading(false);
     });
     return () => unsubscribe();
   }, [user]);
 
-  // 4. Sauvegarde
   const saveData = async (newTotal, newStreak, newHistory, newLastAction, newDailyStats) => {
     if (!user) return;
     setIsSaving(true);
@@ -281,11 +275,9 @@ export default function App() {
     }
   };
 
-  // Ajout avec animation et son
   const handleAddEggs = (amount, e) => {
     if (!isMuted) playPopSound();
 
-    // Spawn du texte flottant à la position de la souris
     const newFloat = {
       id: Date.now() + Math.random(),
       val: amount > 0 ? `+${amount}` : amount,
@@ -353,7 +345,6 @@ export default function App() {
     setIsResetModalOpen(false);
   };
 
-  // Bouton de partage (Discord)
   const handleShare = (h, petInfo) => {
     const text = `🏆 J'ai eu le ${petInfo.name} sur Grow a Garden après ${h.eggsTaken} œufs ouverts ! (growagardentracker.com)`;
     try {
@@ -380,10 +371,8 @@ export default function App() {
     return `il y a ${days} j ${hours % 24} h`;
   };
 
-  // --- NOUVEAUX CALCULS STATISTIQUES (Ignore les jours à 0) ---
+  // Statistiques
   const todayEggs = dailyStats[getTodayString()] || 0;
-  
-  // On ne prend en compte QUE les jours où on a joué (> 0 œufs)
   const activeDailyStats = Object.entries(dailyStats).filter(([_, count]) => count > 0);
   const totalTrackedDays = activeDailyStats.length;
   const totalEggsInStats = activeDailyStats.reduce((acc, [_, count]) => acc + count, 0);
@@ -406,7 +395,7 @@ export default function App() {
   );
 
   return (
-    <div className="min-h-screen lg:fixed lg:inset-0 bg-[#060a0e] text-white font-sans flex flex-col lg:overflow-hidden pb-12 lg:pb-0">
+    <div className="min-h-screen lg:h-screen bg-[#060a0e] text-white font-sans flex flex-col lg:overflow-hidden pb-12 lg:pb-0">
       
       {/* --- ANIMATIONS TEXTES FLOTTANTS --- */}
       {floatingTexts.map(f => (
@@ -420,7 +409,7 @@ export default function App() {
       ))}
 
       {/* --- TOP BAR GLOBALE --- */}
-      <div className="flex-none w-full max-w-[1600px] mx-auto flex justify-between items-center p-4 lg:p-6 lg:px-10">
+      <div className="flex-none w-full max-w-[1800px] mx-auto flex justify-between items-center p-4 lg:p-6 lg:px-8">
         {user && !user.isAnonymous ? (
           <button onClick={handleLogout} className="flex items-center gap-2 bg-emerald-900/40 hover:bg-emerald-800/60 transition-colors px-3 py-1.5 rounded-full border border-emerald-700 shadow-[0_0_10px_rgba(16,185,129,0.2)]">
             <Cloud className="w-3 h-3 text-emerald-400" />
@@ -453,21 +442,18 @@ export default function App() {
         </div>
       </div>
 
-      {/* --- WRAPPER PRINCIPAL DES 3 COLONNES --- */}
-      {/* Retrait de lg:sticky et lg:top pour un alignement parfait */}
-      <div className="flex-1 w-full max-w-[1600px] mx-auto flex flex-col lg:flex-row items-center lg:items-stretch justify-center gap-6 xl:gap-10 px-4 lg:px-10 pb-4 lg:pb-8 min-h-0">
+      {/* --- WRAPPER PRINCIPAL (ELASTIQUE) --- */}
+      <div className="flex-1 w-full max-w-[1800px] mx-auto flex flex-col lg:flex-row items-center lg:items-stretch justify-center gap-6 xl:gap-8 px-4 lg:px-8 pb-4 lg:pb-8 min-h-0 overflow-hidden">
         
         {/* === COLONNE 1 : STATISTIQUES === */}
-        <div className="hidden lg:flex flex-col w-[320px] bg-[#111821] rounded-[3rem] border border-slate-800/50 shadow-2xl overflow-hidden shrink-0">
+        <div className="hidden lg:flex flex-col flex-1 max-w-[320px] xl:max-w-[400px] bg-[#111821] rounded-[3rem] border border-slate-800/50 shadow-2xl lg:h-full lg:min-h-0">
           <div className="flex-none p-8 pb-4">
-            <div className="flex justify-between items-start mb-6">
-              <div className="flex items-center gap-2 text-emerald-500">
-                <BarChart2 className="w-5 h-5" />
-                <h2 className="text-sm font-black uppercase tracking-[0.2em] text-white">Statistiques</h2>
-              </div>
+            <div className="flex items-center gap-2 text-emerald-500 mb-6">
+              <BarChart2 className="w-5 h-5" />
+              <h2 className="text-sm font-black uppercase tracking-[0.2em] text-white">Statistiques</h2>
             </div>
             
-            <div className="bg-emerald-900/20 border border-emerald-500/30 rounded-[2rem] p-6 text-center shadow-inner">
+            <div className="bg-emerald-900/20 border border-emerald-500/30 rounded-[2rem] p-6 text-center shadow-inner mb-6">
               <p className="text-[10px] font-black text-emerald-500/80 uppercase tracking-widest mb-1">Moyenne quotidienne</p>
               <div className="flex items-end justify-center gap-1.5 mt-2">
                 <span className="text-5xl font-black text-emerald-400 tabular-nums tracking-tighter leading-none">{averagePerDay}</span>
@@ -477,7 +463,6 @@ export default function App() {
             </div>
           </div>
 
-          {/* Déplacement du padding à l'intérieur de la zone de scroll pour que la barre de défilement colle au bord */}
           <div className="flex-1 overflow-y-auto custom-scrollbar px-8 pb-8">
             <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest border-b border-slate-800 pb-3 mb-4">Historique par jour</h4>
             
@@ -492,7 +477,7 @@ export default function App() {
               <div className="space-y-2.5">
                 {sortedDailyStats.map(([date, count]) => {
                   const isToday = date === getTodayString();
-                  if (isToday) return null; // Ne pas afficher 2 fois aujourd'hui
+                  if (isToday) return null;
                   return (
                     <div key={date} className="flex justify-between items-center p-4 rounded-2xl border bg-[#0a0f14] border-slate-800">
                       <div className="flex items-center gap-2.5 text-slate-400">
@@ -508,10 +493,10 @@ export default function App() {
           </div>
         </div>
 
-        {/* === COLONNE 2 : L'APPLICATION (Le coeur du tracker) === */}
-        <div className="flex-1 w-full max-w-md lg:max-w-[500px] flex flex-col bg-[#111821] rounded-[3rem] border border-slate-800/50 shadow-2xl overflow-hidden relative">
+        {/* === COLONNE 2 : L'APPLICATION === */}
+        <div className="flex flex-col flex-[1.5] w-full max-w-md lg:max-w-[700px] bg-[#111821] rounded-[3rem] border border-slate-800/50 shadow-2xl relative lg:h-full lg:min-h-0">
           
-          <div className="flex-none w-full bg-gradient-to-b from-[#107c64] to-[#0a4d3e] p-8 flex flex-row items-center justify-center gap-6 relative border-b border-white/5 overflow-hidden">
+          <div className="flex-none w-full bg-gradient-to-b from-[#107c64] to-[#0a4d3e] p-8 flex flex-row items-center justify-center gap-6 relative border-b border-white/5 overflow-hidden rounded-t-[3rem]">
             <div className="relative group flex-shrink-0 flex justify-center items-center w-20 h-20">
               {!imageError ? (
                 <img 
@@ -552,7 +537,6 @@ export default function App() {
           </div>
 
           <div className="flex-1 overflow-y-auto custom-scrollbar p-6 lg:p-8 flex flex-col justify-between space-y-8 relative">
-            
             <div className="space-y-6 lg:space-y-8">
               <div className="space-y-4">
                 <div className="flex items-center gap-3 px-2">
@@ -560,7 +544,7 @@ export default function App() {
                   <span className="text-[9px] lg:text-[10px] font-black text-emerald-500 uppercase tracking-[0.3em]">Ouvrir des œufs</span>
                   <div className="h-px flex-1 bg-slate-800"></div>
                 </div>
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-3 gap-4 xl:gap-6">
                   {[1, 5, 13].map(val => (
                     <button 
                       key={`+${val}`}
@@ -579,7 +563,7 @@ export default function App() {
                   <span className="text-[9px] lg:text-[10px] font-black text-slate-600 uppercase tracking-[0.3em]">Correction</span>
                   <div className="h-px flex-1 bg-slate-800/50"></div>
                 </div>
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-3 gap-4 xl:gap-6">
                   {[1, 5, 13].map(val => (
                     <button 
                       key={`-${val}`}
@@ -618,12 +602,11 @@ export default function App() {
                 </div>
               </button>
             </div>
-
           </div>
         </div>
 
         {/* === COLONNE 3 : HISTORIQUE === */}
-        <div className="hidden lg:flex flex-col w-[380px] bg-[#111821] rounded-[3rem] border border-slate-800/50 shadow-2xl overflow-hidden shrink-0 mt-6 lg:mt-0">
+        <div className="hidden lg:flex flex-col flex-1 max-w-[380px] xl:max-w-[450px] bg-[#111821] rounded-[3rem] border border-slate-800/50 shadow-2xl lg:h-full lg:min-h-0">
           
           <div className="flex-none flex justify-between items-center p-8 pb-4">
             <h2 className="text-sm font-black text-slate-500 uppercase tracking-[0.2em] flex items-center gap-3">
@@ -659,9 +642,8 @@ export default function App() {
                     </div>
                     <div className="flex-1 min-w-0 flex flex-col justify-center gap-2">
                       <div className="flex justify-between items-start gap-2 w-full">
-                        <span className="text-orange-500 font-black uppercase tracking-wider text-[11px] xl:text-xs leading-tight pt-1 flex-1 min-w-0 break-words">{petInfo.name}</span>
+                        <span className="text-orange-500 font-black uppercase tracking-wider text-[11px] xl:text-xs leading-tight pt-1 flex-1 min-w-0 break-words whitespace-normal">{petInfo.name}</span>
                         
-                        {/* Date et Heure coupées sur 2 lignes pour libérer l'espace ! */}
                         <div className="text-right shrink-0 flex flex-col items-end pt-1">
                           <span className="text-[9px] text-slate-400 font-bold tabular-nums leading-none mb-1">{h.date.split(' ')[0]}</span>
                           <span className="text-[8px] text-slate-500 font-bold tabular-nums leading-none">{h.date.split(' ')[1]}</span>
@@ -678,7 +660,6 @@ export default function App() {
                         </div>
                       </div>
                     </div>
-                    {/* Bouton Partager */}
                     <button 
                       onClick={() => handleShare(h, petInfo)}
                       className="absolute top-2 right-2 p-1.5 bg-slate-800/80 hover:bg-slate-700 rounded-lg text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm"
