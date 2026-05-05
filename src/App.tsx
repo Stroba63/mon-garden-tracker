@@ -658,10 +658,9 @@ export default function App() {
                       <span className="text-4xl drop-shadow-md" style={{ display: petInfo.image ? 'none' : 'block' }}>{petInfo.emoji}</span>
                     </div>
                     <div className="flex-1 min-w-0 flex flex-col justify-center gap-2">
-                      <div className="flex justify-between items-start">
-                        {/* Correction appliquée: break-words et espace pour ne pas couper le texte */}
-                        <span className="text-orange-500 font-black uppercase tracking-wider text-xs leading-tight pt-1 pr-2 break-words whitespace-normal">{petInfo.name}</span>
-                        <span className="text-[9px] text-slate-500 font-bold tabular-nums text-right shrink-0">{h.date}</span>
+                      <div className="flex justify-between items-start gap-2 w-full">
+                        <span className="text-orange-500 font-black uppercase tracking-wider text-xs leading-tight pt-1 flex-1 min-w-0 break-words">{petInfo.name}</span>
+                        <span className="text-[9px] text-slate-500 font-bold tabular-nums text-right shrink-0 whitespace-nowrap pt-1">{h.date}</span>
                       </div>
                       <div className="flex justify-between items-end mt-1">
                         <div className="bg-emerald-500/10 text-emerald-400 px-3 py-1.5 rounded-xl border border-emerald-500/30 font-black flex flex-col justify-center shrink-0">
